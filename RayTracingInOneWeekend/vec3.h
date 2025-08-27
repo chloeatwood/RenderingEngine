@@ -1,8 +1,6 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-#include <cmath>
-#include <iostream>
 
 //Doubles are used here because they have greater range and precision
 //If too much memory is being used switch to float because it is half the size
