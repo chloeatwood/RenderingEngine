@@ -13,7 +13,7 @@ int main() {
 
     hittable_list world;
 
-    //Green?
+    //Green Floor
     auto ground_material = make_shared<lambertian>(color(0.23,0.48,0.34));
     world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_material));
 
@@ -29,6 +29,8 @@ int main() {
                     //diffuse
                     auto albedo = color::random() * color::random();
                     sphere_material = make_shared<lambertian>(albedo);
+                    auto center2 = center + vec3(0, random_double(0, .5), 0);
+                    world.add(make_shared<sphere>(center, center2, 0.2, sphere_material));
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 }else if(choose_mat < 0.95){
                     //metal
@@ -77,8 +79,8 @@ int main() {
     camera cam;
 
     cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
+    cam.image_width = 400;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.vfov = 20;
