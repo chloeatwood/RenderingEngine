@@ -14,7 +14,7 @@
 
     [ ] The ability to load and render triangle meshes (file format(s) of your choice; may use third-party libraries for loading) -> Book 2
 
-    [ ] A spatial subdivision acceleration structure of your choice -> Book 2
+    [X] A spatial subdivision acceleration structure of your choice -> Book 2
 
     [X] Specular, diffuse, and dielectric materials (per first volume of Ray Tracing in One Weekend series) -> Book 1
 
