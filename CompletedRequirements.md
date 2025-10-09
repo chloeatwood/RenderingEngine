@@ -6,11 +6,11 @@
 
     [X] Ray/sphere intersections -> Book 1
 
-    [ ] Ray/triangle intersections -> Book 2
+    [ ] Ray/triangle intersections -> Book 3
 
-    [ ] The ability to load textures (file format(s) of your choice; may use third-party libraries) -> Book 2
+    [X] The ability to load textures (file format(s) of your choice; may use third-party libraries) -> Book 2
 
-    [ ] Textured spheres and triangles -> Book 2
+    [ ] Textured spheres and triangles -> Book 2 and Book 3
 
     [ ] The ability to load and render triangle meshes (file format(s) of your choice; may use third-party libraries for loading) -> Book 2
 

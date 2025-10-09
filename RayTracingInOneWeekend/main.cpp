@@ -158,14 +158,40 @@ void earth() {
     cam.render(hittable_list(globe));
 }
 
+void perlin_spheres(){
+    hittable_list world;
+
+    auto pertext = make_shared<noise_texture>(4);
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertext)));
+    world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
+
+    camera c;
+
+    c.aspect_ratio = 16.0/9.0;
+    c.image_width = 400;
+    c.samples_per_pixel = 100;
+    c.max_depth = 50;
+
+    c.vfov = 20;
+    c.lookfrom = point3(13, 2, 3);
+    c.lookat = point3(0, 0, 0);
+    c.vup = vec3(0, 1, 0);
+
+    c.defocus_angle = 0;
+
+    c.render(world);
+
+}
+
 
 int main(){
     //lessSpheresFast();
-    switch(4) {
+    switch(5) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
         case 4: earth(); break;
+        case 5: perlin_spheres(); break;
 
     }
 }
