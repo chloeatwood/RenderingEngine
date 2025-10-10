@@ -186,7 +186,7 @@ void perlin_spheres(){
 
 int main(){
     //lessSpheresFast();
-    switch(6) {
+    switch(5) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;

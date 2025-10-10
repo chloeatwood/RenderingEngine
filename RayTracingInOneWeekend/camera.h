@@ -1,6 +1,9 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include "stb_image_write.h"
 #include "hittable.h"
 #include "material.h"
 
@@ -19,11 +22,34 @@ class camera {
         double defocus_angle = 0;   //Variation angle of rays through each pixel
         double focus_dist = 10;     //Distance from camera lookfrom point to plane of perfect focus
 
+        // void render(const hittable& world){
+        //     initialize();
+
+        //     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+
+        //     for(int j = 0; j < image_height; j++){
+        //         std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+        //         for(int i = 0; i < image_width; i++){
+        //             color pixel_color(0, 0, 0);
+        //             for(int sample = 0; sample < samples_per_pixel; sample++){
+        //                 ray r = get_ray(i, j);
+        //                 pixel_color += ray_color(r, max_depth, world);
+        //             }
+        //             write_color(std::cout, pixel_samples_scale * pixel_color);
+        //         }
+        //     }
+
+        //     std::clog << "\rDone.           \n";
+        // }
+
+        //Now outputs to a png file so I no longer have to pipe the output tp a ppm file
+            //Then use magick to convert it into a png. Can click on the png and watch
+            //it render as well
         void render(const hittable& world){
             initialize();
-
-            std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-
+            const char* filename = "output.png";
+            std::vector<unsigned char> image(image_width * image_height * 3);
+            
             for(int j = 0; j < image_height; j++){
                 std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
                 for(int i = 0; i < image_width; i++){
@@ -32,11 +58,28 @@ class camera {
                         ray r = get_ray(i, j);
                         pixel_color += ray_color(r, max_depth, world);
                     }
-                    write_color(std::cout, pixel_samples_scale * pixel_color);
+                    
+                    auto r = pixel_samples_scale * pixel_color.x();
+                    auto g = pixel_samples_scale * pixel_color.y();
+                    auto b = pixel_samples_scale * pixel_color.z();
+                    
+                    r = std::sqrt(r);
+                    g = std::sqrt(g);
+                    b = std::sqrt(b);
+                    
+                    int index = (j * image_width + i) * 3;
+                    image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                    image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                    image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
+                }
+                
+                // Write every 10 scanlines (adjust as needed)
+                if (j % 10 == 0 || j == image_height - 1) {
+                    stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
                 }
             }
-
-            std::clog << "\rDone.           \n";
+            
+            std::clog << "\rDone. Saved to " << filename << "\n";
         }
 
     private:
