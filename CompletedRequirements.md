@@ -6,11 +6,11 @@
 
     [X] Ray/sphere intersections -> Book 1
 
-    [ ] Ray/triangle intersections -> Not in Ray Tracing Series?
+    [X] Ray/triangle intersections -> Not in Ray Tracing Series?
 
     [X] The ability to load textures (file format(s) of your choice; may use third-party libraries) -> Book 2
 
-    [ ] Textured spheres and triangles -> Not in Ray Tracing Series
+    [X] Textured spheres and triangles -> Triangles not in Ray Tracing Series
 
     [ ] The ability to load and render triangle meshes (file format(s) of your choice; may use third-party libraries for loading) -> Not in ray Tracing Series
 
@@ -26,7 +26,7 @@
 
     [ ] Volume rendering (smoke, clouds, etc.): 10 -> Book 2
 
-    [ ] Quads: 10 -> Book 2
+    [X] Quads: 10 -> Book 2
 
     [ ] Quadrics: 15
 
