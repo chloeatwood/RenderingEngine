@@ -2,6 +2,7 @@
 #define SPHERE_H
 
 #include "hittable.h"
+#include "hittable_list.h"
 
 class sphere : public hittable {
     public:
@@ -72,5 +73,14 @@ class sphere : public hittable {
             v = theta / pi;
         }
 };
+
+
+inline shared_ptr<sphere> make_sphere(const point3& center, double radius, shared_ptr<material> mat){
+    return make_shared<sphere>(center, radius, mat);
+}
+
+inline shared_ptr<sphere> make_moving_sphere(const point3& center1, const point3& center2, double radius, shared_ptr<material> mat){
+    return make_shared<sphere>(center1, center2, radius, mat);
+}
 
 #endif

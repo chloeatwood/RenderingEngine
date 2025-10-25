@@ -62,6 +62,7 @@ void lostaSpheres() {
     cam.image_width       = 1200;
     cam.samples_per_pixel = 500;
     cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov     = 20;
     cam.lookfrom = point3(13,2,3);
@@ -101,6 +102,7 @@ void lessSpheresFast() {
     cam.image_width       = 400; //1200;
     cam.samples_per_pixel = 50; //500;
     cam.max_depth         = 20; //50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov     = 20;
     cam.lookfrom = point3(13,2,3);
@@ -127,6 +129,7 @@ void checkered_spheres() {
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov = 20;
     cam.lookfrom = point3(13, 2, 3);
@@ -149,6 +152,7 @@ void earth() {
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov = 20;
     cam.lookfrom = point3(0, 0, 12);
@@ -173,6 +177,7 @@ void perlin_spheres(){
     c.image_width = 400;
     c.samples_per_pixel = 100;
     c.max_depth = 50;
+    c.background = color(0.70, 0.80, 1.00);
 
     c.vfov = 20;
     c.lookfrom = point3(13, 2, 3);
@@ -207,6 +212,7 @@ void quadsPretty() {
     cam.image_width       = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov     = 80;
     cam.lookfrom = point3(0,0,9);
@@ -241,6 +247,7 @@ void quadsBasic(){
     cam.image_width       = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov     = 80;
     cam.lookfrom = point3(0,0,9);
@@ -283,6 +290,7 @@ void trianlgesBasic(){
     cam.image_width       = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov     = 80;
     cam.lookfrom = point3(0, 0, 9);
@@ -382,6 +390,7 @@ void trianglesPretty(){
     cam.image_width       = 800;
     cam.samples_per_pixel = 100;
     cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov     = 40;
     cam.lookfrom = point3(0, 0, 9);
@@ -422,6 +431,7 @@ void checkered_triangles() {
     cam.image_width = 600;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+    cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov = 50;
     cam.lookfrom = point3(0, 0, 12);
@@ -433,9 +443,83 @@ void checkered_triangles() {
     cam.render(world);
 }
 
+void simple_light() {
+    hittable_list world;
+
+    auto pertxt = make_shared<noise_texture>(4);
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertxt)));
+    world.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertxt)));
+
+    auto diff = make_shared<diffuse_light>(color(4, 4, 4));
+    world.add(make_shared<sphere>(point3(0, 7, 0), 2, diff));
+    world.add(make_shared<quad>(point3(3, 1, -2), vec3(2, 0, 0), vec3(0, 2, 0), diff));
+
+    camera c;
+
+    c.aspect_ratio = 16.0 / 9.0;
+    c.image_width = 400;
+    c.samples_per_pixel = 100;
+    c.max_depth = 50;
+    c.background = color(0, 0, 0);
+
+    c.vfov = 20;
+    c.lookfrom = point3(26, 3, 6);
+    c.lookat = point3(0, 2, 0);
+    c.vup = vec3(0, 1, 0);
+
+    c.defocus_angle = 0;
+
+    c.render(world);
+}
+
+void cornell_box(){
+    hittable_list w;
+
+    auto purple = make_shared<lambertian>(color(.65, .05, .65));
+    auto white = make_shared<lambertian>(color(.73, .73, .73));
+    auto lime_green = make_shared<lambertian>(color(.45, .73, .12));
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+
+    w.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), lime_green));
+    w.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), purple));
+    w.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
+
+    w.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
+    w.add(make_shared<quad>(point3(555, 555, 555), vec3(-555, 0, 0), vec3(0, 0, -555), white));
+    w.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
+
+    shared_ptr<hittable> box1 = box(point3(0, 0, 0), point3(165, 330, 165), white);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265, 0, 295));
+    w.add(box1);
+
+    shared_ptr<hittable> box2 = box(point3(0, 0, 0), point3(165, 165, 165), lime_green);
+    box2 = make_shared<rotate_y>(box2, -18);
+    box2 = make_shared<translate>(box2, vec3(130, 0, 65));
+    w.add(box2);
+
+    camera c;
+
+    c.aspect_ratio = 1.0;
+    c.image_width = 600;
+    c.samples_per_pixel = 200;
+    c.max_depth = 50;
+    c.background = color(0, 0, 0);
+
+    c.vfov = 40;
+    c.lookfrom = point3(278, 278, -800);
+    c.lookat = point3(278, 278, 0);
+    c.vup = vec3(0, 1, 0);
+
+    c.defocus_angle = 0;
+
+    c.render(w);
+
+}
+
 int main(){
     //lessSpheresFast();
-    switch(10) {
+    switch(12) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -446,5 +530,7 @@ int main(){
         case 8: trianlgesBasic(); break;
         case 9: trianglesPretty(); break;
         case 10: checkered_triangles(); break;
+        case 11: simple_light(); break;
+        case 12: cornell_box(); break;
     }
 }
