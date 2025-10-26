@@ -18,13 +18,13 @@
 
     [X] Specular, diffuse, and dielectric materials (per first volume of Ray Tracing in One Weekend series) -> Book 1
 
-    [ ] Emissive materials (lights) -> Book 2
+    [X] Emissive materials (lights) -> Book 2
 
 ## Must choose at least 25 for a C-, 75 for guaranteed A (would be over-exaguration):
 
     [ ] High dynamic range images: 10 -> Book 3
 
-    [ ] Volume rendering (smoke, clouds, etc.): 10 -> Book 2
+    [X] Volume rendering (smoke, clouds, etc.): 10 -> Book 2
 
     [X] Quads: 10 -> Book 2
 
@@ -40,7 +40,7 @@
 
     [X] Defocus blur/depth of field: 10 -> Book 1
     
-    [ ] Object instancing: 10 -> Book 2
+    [X] Object instancing: 10 -> Book 2, with quads/squares
 
     [X] Perlin noise: 10 -> Book 1 and Book 2
 

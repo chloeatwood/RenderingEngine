@@ -9,6 +9,7 @@
 #include "material.h"
 #include "quad.h"
 #include "triangle.h"
+#include "volume.h"
 
 void lostaSpheres() {
 
@@ -517,9 +518,496 @@ void cornell_box(){
 
 }
 
+void cornell_smoke(){
+    hittable_list world;
+
+    auto purple = make_shared<lambertian>(color(.65, .05, .65));
+    auto white = make_shared<lambertian>(color(.73, .73, .73));
+    auto lime_green = make_shared<lambertian>(color(.45, .73, .12));
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+
+    world.add(make_shared<quad>(point3(555,0,0), vec3(0,555,0), vec3(0,0,555), lime_green));
+    world.add(make_shared<quad>(point3(0,0,0), vec3(0,555,0), vec3(0,0,555), purple));
+    world.add(make_shared<quad>(point3(113,554,127), vec3(330,0,0), vec3(0,0,305), light));
+    world.add(make_shared<quad>(point3(0,555,0), vec3(555,0,0), vec3(0,0,555), white));
+    world.add(make_shared<quad>(point3(0,0,0), vec3(555,0,0), vec3(0,0,555), white));
+    world.add(make_shared<quad>(point3(0,0,555), vec3(555,0,0), vec3(0,555,0), white));
+
+    shared_ptr<hittable> box1 = box(point3(0,0,0), point3(165,330,165), white);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265,0,295));
+
+    shared_ptr<hittable> box2 = box(point3(0,0,0), point3(165,165,165), white);
+    box2 = make_shared<rotate_y>(box2, -18);
+    box2 = make_shared<translate>(box2, vec3(130,0,65));
+
+    world.add(make_shared<volume>(box1, 0.01, color(0,0,0)));
+    world.add(make_shared<volume>(box2, 0.01, color(1,1,1)));
+
+    camera cam;
+
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = 600;
+    cam.samples_per_pixel = 200;
+    cam.max_depth         = 50;
+    cam.background        = color(0,0,0);
+
+    cam.vfov     = 40;
+    cam.lookfrom = point3(278, 278, -800);
+    cam.lookat   = point3(278, 278, 0);
+    cam.vup      = vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void final_scene(int image_width, int samples_per_pixel, int max_depth) {
+    hittable_list boxes1;
+    auto ground = make_shared<lambertian>(color(0.48, 0.83, 0.53));
+
+    int boxes_per_side = 20;
+    for (int i = 0; i < boxes_per_side; i++) {
+        for (int j = 0; j < boxes_per_side; j++) {
+            auto w = 100.0;
+            auto x0 = -1000.0 + i*w;
+            auto z0 = -1000.0 + j*w;
+            auto y0 = 0.0;
+            auto x1 = x0 + w;
+            auto y1 = random_double(1,101);
+            auto z1 = z0 + w;
+
+            boxes1.add(box(point3(x0,y0,z0), point3(x1,y1,z1), ground));
+        }
+    }
+
+    hittable_list world;
+
+    world.add(make_shared<bvh_node>(boxes1));
+
+    auto light = make_shared<diffuse_light>(color(7, 7, 7));
+    world.add(make_shared<quad>(point3(123,554,147), vec3(300,0,0), vec3(0,0,265), light));
+
+    auto center1 = point3(400, 400, 200);
+    auto center2 = center1 + vec3(30,0,0);
+    auto sphere_material = make_shared<lambertian>(color(0.7, 0.3, 0.1));
+    world.add(make_shared<sphere>(center1, center2, 50, sphere_material));
+
+    world.add(make_shared<sphere>(point3(260, 150, 45), 50, make_shared<dielectric>(1.5)));
+    world.add(make_shared<sphere>(
+        point3(0, 150, 145), 50, make_shared<metal>(color(0.8, 0.8, 0.9), 1.0)
+    ));
+
+    auto boundary = make_shared<sphere>(point3(360,150,145), 70, make_shared<dielectric>(1.5));
+    world.add(boundary);
+    world.add(make_shared<volume>(boundary, 0.2, color(0.2, 0.4, 0.9)));
+    boundary = make_shared<sphere>(point3(0,0,0), 5000, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(boundary, .0001, color(1,1,1)));
+
+    auto emat = make_shared<lambertian>(make_shared<image_texture>("earthmap.jpg"));
+    world.add(make_shared<sphere>(point3(400,200,400), 100, emat));
+    auto pertext = make_shared<noise_texture>(0.2);
+    world.add(make_shared<sphere>(point3(220,280,300), 80, make_shared<lambertian>(pertext)));
+
+    hittable_list boxes2;
+    auto white = make_shared<lambertian>(color(.73, .73, .73));
+    int ns = 1000;
+    for (int j = 0; j < ns; j++) {
+        boxes2.add(make_shared<sphere>(point3::random(0,165), 10, white));
+    }
+
+    world.add(make_shared<translate>(
+        make_shared<rotate_y>(
+            make_shared<bvh_node>(boxes2), 15),
+            vec3(-100,270,395)
+        )
+    );
+
+    camera cam;
+
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = image_width;
+    cam.samples_per_pixel = samples_per_pixel;
+    cam.max_depth         = max_depth;
+    cam.background        = color(0,0,0);
+
+    cam.vfov     = 40;
+    cam.lookfrom = point3(478, 278, -600);
+    cam.lookat   = point3(278, 278, 0);
+    cam.vup      = vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void volume_showcase() {
+    hittable_list world;
+
+    // Background elements - glowing spheres
+    auto light_material = make_shared<diffuse_light>(color(4, 4, 4));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(color(0.1, 0.1, 0.15))));
+    
+    // Create multiple colored smoke spheres with different densities
+    
+    // Large purple fog sphere
+    auto boundary1 = make_shared<sphere>(point3(-2, 2, 0), 1.5, make_shared<dielectric>(1.5));
+    world.add(boundary1);
+    world.add(make_shared<volume>(boundary1, 0.5, color(0.8, 0.2, 0.9)));
+    
+    // Medium lime green smoke
+    auto boundary2 = make_shared<sphere>(point3(2, 2, -1), 1.2, make_shared<dielectric>(1.5));
+    world.add(boundary2);
+    world.add(make_shared<volume>(boundary2, 0.8, color(0.4, 1.0, 0.2)));
+    
+    // Dense cyan fog ball
+    auto boundary3 = make_shared<sphere>(point3(0, 3.5, 2), 1.0, make_shared<dielectric>(1.5));
+    world.add(boundary3);
+    world.add(make_shared<volume>(boundary3, 1.5, color(0.1, 0.9, 1.0)));
+    
+    // Small bright orange smoke
+    auto boundary4 = make_shared<sphere>(point3(-1, 1, 3), 0.8, make_shared<dielectric>(1.5));
+    world.add(boundary4);
+    world.add(make_shared<volume>(boundary4, 1.2, color(1.0, 0.5, 0.1)));
+    
+    // Tiny pink smoke puff
+    auto boundary5 = make_shared<sphere>(point3(1.5, 1.2, 2), 0.6, make_shared<dielectric>(1.5));
+    world.add(boundary5);
+    world.add(make_shared<volume>(boundary5, 2.0, color(1.0, 0.3, 0.7)));
+    
+    // Volumetric box - smoky purple cube
+    shared_ptr<hittable> smoke_box = box(point3(-1, 0, -2), point3(0.5, 1.8, -0.5), make_shared<lambertian>(color(0.5, 0.5, 0.5)));
+    smoke_box = make_shared<rotate_y>(smoke_box, 25);
+    world.add(make_shared<volume>(smoke_box, 0.3, color(0.6, 0.1, 0.8)));
+    
+    // Light sources inside some volumes for glow effect
+    world.add(make_shared<sphere>(point3(-2, 2, 0), 0.3, make_shared<diffuse_light>(color(10, 5, 12))));
+    world.add(make_shared<sphere>(point3(2, 2, -1), 0.3, make_shared<diffuse_light>(color(6, 15, 3))));
+    world.add(make_shared<sphere>(point3(0, 3.5, 2), 0.2, make_shared<diffuse_light>(color(2, 12, 15))));
+    
+    // Atmospheric fog - entire scene envelope
+    auto atmosphere = make_shared<sphere>(point3(0, 0, 0), 100, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(atmosphere, 0.0001, color(0.7, 0.8, 1.0)));
+    
+    // Some solid objects for contrast
+    world.add(make_shared<sphere>(point3(3, 0.7, 1), 0.7, make_shared<metal>(color(0.9, 0.9, 1.0), 0.1)));
+    world.add(make_shared<sphere>(point3(-3, 0.5, 0), 0.5, make_shared<lambertian>(color(1.0, 1.0, 1.0))));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 400;
+    cam.max_depth = 50;
+    cam.background = color(0.05, 0.05, 0.1);
+
+    cam.vfov = 40;
+    cam.lookfrom = point3(0, 4, 12);
+    cam.lookat = point3(0, 2, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void purple() {
+    hittable_list world;
+
+    // Soft ground fog
+    auto ground = make_shared<lambertian>(color(0.15, 0.12, 0.2));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground));
+    
+    // Large blue cloud masses
+    auto blue_cloud1 = make_shared<sphere>(point3(-4, 3, -2), 3.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(blue_cloud1, 0.2, color(0.3, 0.4, 0.8)));
+    
+    auto blue_cloud2 = make_shared<sphere>(point3(5, 4, 1), 4.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(blue_cloud2, 0.15, color(0.2, 0.5, 0.9)));
+    
+    auto blue_cloud3 = make_shared<sphere>(point3(-2, 6, 5), 3.2, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(blue_cloud3, 0.25, color(0.4, 0.5, 0.95)));
+    
+    // Purple cloud masses
+    auto purple_cloud1 = make_shared<sphere>(point3(3, 2, -3), 2.8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_cloud1, 0.3, color(0.6, 0.3, 0.8)));
+    
+    auto purple_cloud2 = make_shared<sphere>(point3(-5, 5, 2), 3.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_cloud2, 0.18, color(0.7, 0.4, 0.9)));
+    
+    auto purple_cloud3 = make_shared<sphere>(point3(1, 7, -1), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_cloud3, 0.22, color(0.5, 0.25, 0.7)));
+    
+    // Pink/magenta wisps
+    auto pink_cloud1 = make_shared<sphere>(point3(2, 4, 3), 2.2, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(pink_cloud1, 0.28, color(0.9, 0.4, 0.7)));
+    
+    auto pink_cloud2 = make_shared<sphere>(point3(-3, 3, -1), 2.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(pink_cloud2, 0.35, color(0.95, 0.5, 0.8)));
+    
+    // Cyan/teal clouds
+    auto cyan_cloud1 = make_shared<sphere>(point3(4, 5, 4), 2.6, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cyan_cloud1, 0.2, color(0.3, 0.8, 0.9)));
+    
+    auto cyan_cloud2 = make_shared<sphere>(point3(-1, 4, -4), 2.3, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cyan_cloud2, 0.25, color(0.2, 0.9, 0.95)));
+    
+    // Lavender mist layers
+    auto lavender1 = make_shared<sphere>(point3(0, 2, 0), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(lavender1, 0.4, color(0.7, 0.6, 0.95)));
+    
+    auto lavender2 = make_shared<sphere>(point3(-2, 8, 3), 2.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(lavender2, 0.3, color(0.75, 0.65, 0.9)));
+    
+    // Scattered lantern/star lights - warm colors
+    world.add(make_shared<sphere>(point3(-3, 6, 2), 0.3, make_shared<diffuse_light>(color(8, 6, 3))));  // warm orange
+    world.add(make_shared<sphere>(point3(4, 7, -1), 0.25, make_shared<diffuse_light>(color(10, 8, 4))));  // golden
+    world.add(make_shared<sphere>(point3(1, 5, 4), 0.35, make_shared<diffuse_light>(color(6, 5, 10))));  // cool purple
+    world.add(make_shared<sphere>(point3(-5, 4, -2), 0.28, make_shared<diffuse_light>(color(4, 8, 10))));  // cyan
+    world.add(make_shared<sphere>(point3(2, 8, 1), 0.22, make_shared<diffuse_light>(color(10, 5, 7))));  // pink
+    world.add(make_shared<sphere>(point3(-1, 3, -3), 0.3, make_shared<diffuse_light>(color(7, 9, 5))));  // lime
+    world.add(make_shared<sphere>(point3(5, 3, 3), 0.26, make_shared<diffuse_light>(color(5, 4, 10))));  // deep blue
+    world.add(make_shared<sphere>(point3(-4, 9, 0), 0.24, make_shared<diffuse_light>(color(9, 4, 8))));  // magenta
+    world.add(make_shared<sphere>(point3(3, 6, -4), 0.32, make_shared<diffuse_light>(color(8, 8, 10))));  // white-blue
+    world.add(make_shared<sphere>(point3(0, 10, 2), 0.2, make_shared<diffuse_light>(color(10, 7, 3))));  // amber
+    
+    // More distant dimmer lights (stars)
+    world.add(make_shared<sphere>(point3(-6, 12, -5), 0.15, make_shared<diffuse_light>(color(5, 5, 7))));
+    world.add(make_shared<sphere>(point3(7, 11, -3), 0.18, make_shared<diffuse_light>(color(7, 4, 5))));
+    world.add(make_shared<sphere>(point3(-2, 13, 4), 0.16, make_shared<diffuse_light>(color(4, 6, 8))));
+    world.add(make_shared<sphere>(point3(6, 14, 1), 0.14, make_shared<diffuse_light>(color(6, 6, 4))));
+    
+    // Volumetric cloud layers for depth
+    shared_ptr<hittable> cloud_box1 = box(point3(-7, 1, -5), point3(-2, 4, 3), make_shared<lambertian>(color(0.5, 0.5, 0.5)));
+    cloud_box1 = make_shared<rotate_y>(cloud_box1, 25);
+    world.add(make_shared<volume>(cloud_box1, 0.08, color(0.5, 0.4, 0.85)));
+    
+    shared_ptr<hittable> cloud_box2 = box(point3(2, 3, -4), point3(7, 7, 2), make_shared<lambertian>(color(0.5, 0.5, 0.5)));
+    cloud_box2 = make_shared<rotate_y>(cloud_box2, -30);
+    world.add(make_shared<volume>(cloud_box2, 0.1, color(0.4, 0.6, 0.9)));
+    
+    // Atmospheric haze - light purple/blue tint
+    auto atmosphere = make_shared<sphere>(point3(0, 0, 0), 200, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(atmosphere, 0.0001, color(0.5, 0.4, 0.7)));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 400;
+    cam.max_depth = 50;
+    cam.background = color(0.15, 0.1, 0.25);  // Deep purple-blue
+
+    cam.vfov = 55;
+    cam.lookfrom = point3(0, 3, 12);
+    cam.lookat = point3(0, 5, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void dark() {
+    hittable_list world;
+
+    // Dark stormy ground
+    auto dark_ground = make_shared<lambertian>(color(0.05, 0.05, 0.08));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, dark_ground));
+    
+    // Large turbulent cloud masses - dark grays and blacks
+    auto cloud1 = make_shared<sphere>(point3(-3, 4, -2), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cloud1, 0.3, color(0.15, 0.15, 0.18)));
+    
+    auto cloud2 = make_shared<sphere>(point3(4, 5, 0), 3.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cloud2, 0.25, color(0.1, 0.1, 0.12)));
+    
+    auto cloud3 = make_shared<sphere>(point3(0, 6, 3), 2.8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cloud3, 0.35, color(0.08, 0.08, 0.1)));
+    
+    auto cloud4 = make_shared<sphere>(point3(-5, 3, 2), 2.2, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cloud4, 0.4, color(0.12, 0.1, 0.15)));
+    
+    auto cloud5 = make_shared<sphere>(point3(2, 3, -4), 2.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cloud5, 0.5, color(0.18, 0.15, 0.2)));
+    
+    // Smaller wispy clouds
+    auto wisp1 = make_shared<sphere>(point3(1, 7, 1), 1.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(wisp1, 0.15, color(0.2, 0.18, 0.22)));
+    
+    auto wisp2 = make_shared<sphere>(point3(-2, 8, -1), 1.3, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(wisp2, 0.2, color(0.16, 0.14, 0.18)));
+    
+    // Dense storm core - very dark
+    auto storm_core = make_shared<sphere>(point3(0, 4, 0), 1.8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(storm_core, 1.5, color(0.02, 0.02, 0.03)));
+    
+    // Lightning-struck areas - subtle purple/blue glow
+    auto charged1 = make_shared<sphere>(point3(-1, 5, -1), 0.8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(charged1, 0.6, color(0.15, 0.12, 0.25)));
+    
+    auto charged2 = make_shared<sphere>(point3(2, 4, 1), 0.6, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(charged2, 0.8, color(0.12, 0.15, 0.3)));
+    
+    // Distant lightning flashes (dim lights)
+    world.add(make_shared<sphere>(point3(-4, 6, -5), 0.5, make_shared<diffuse_light>(color(0.8, 0.9, 1.2))));
+    world.add(make_shared<sphere>(point3(5, 7, -3), 0.3, make_shared<diffuse_light>(color(0.6, 0.7, 1.0))));
+    world.add(make_shared<sphere>(point3(1, 9, 2), 0.4, make_shared<diffuse_light>(color(0.5, 0.6, 0.9))));
+    
+    // Volumetric cloud boxes - layered storm clouds
+    shared_ptr<hittable> cloud_layer1 = box(point3(-8, 2, -6), point3(-3, 5, 2), make_shared<lambertian>(color(0.1, 0.1, 0.1)));
+    cloud_layer1 = make_shared<rotate_y>(cloud_layer1, 15);
+    world.add(make_shared<volume>(cloud_layer1, 0.1, color(0.14, 0.13, 0.16)));
+    
+    shared_ptr<hittable> cloud_layer2 = box(point3(3, 3, -4), point3(7, 6, 3), make_shared<lambertian>(color(0.1, 0.1, 0.1)));
+    cloud_layer2 = make_shared<rotate_y>(cloud_layer2, -20);
+    world.add(make_shared<volume>(cloud_layer2, 0.12, color(0.11, 0.1, 0.13)));
+    
+    // Very thin atmospheric haze - dark blue/purple tint
+    auto atmosphere = make_shared<sphere>(point3(0, 0, 0), 150, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(atmosphere, 0.00008, color(0.1, 0.08, 0.15)));
+    
+    // A few barely visible stars (very dim lights far away)
+    world.add(make_shared<sphere>(point3(-10, 15, -20), 0.2, make_shared<diffuse_light>(color(0.3, 0.3, 0.4))));
+    world.add(make_shared<sphere>(point3(12, 18, -18), 0.15, make_shared<diffuse_light>(color(0.25, 0.25, 0.35))));
+    world.add(make_shared<sphere>(point3(-8, 20, -15), 0.18, make_shared<diffuse_light>(color(0.28, 0.28, 0.38))));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+    cam.background = color(0.01, 0.01, 0.02);  // Nearly black
+
+    cam.vfov = 50;
+    cam.lookfrom = point3(0, 2, 15);
+    cam.lookat = point3(0, 5, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void colorful() {
+    hittable_list world;
+
+    // Forest floor with texture
+    auto forest_floor = make_shared<lambertian>(color(0.1, 0.15, 0.08));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, forest_floor));
+    
+    // Floating glowing orbs - fairy lights scattered throughout
+    auto bright_cyan = make_shared<diffuse_light>(color(12, 15, 18));
+    auto bright_magenta = make_shared<diffuse_light>(color(18, 8, 15));
+    auto bright_lime = make_shared<diffuse_light>(color(15, 20, 8));
+    auto bright_purple = make_shared<diffuse_light>(color(15, 8, 20));
+    auto bright_orange = make_shared<diffuse_light>(color(20, 12, 5));
+    
+    // Large central glowing orbs
+    world.add(make_shared<sphere>(point3(0, 3, 0), 0.6, bright_cyan));
+    world.add(make_shared<sphere>(point3(-3, 2.5, -2), 0.5, bright_magenta));
+    world.add(make_shared<sphere>(point3(3, 2.8, -1), 0.55, bright_lime));
+    world.add(make_shared<sphere>(point3(-2, 4, 2), 0.45, bright_purple));
+    world.add(make_shared<sphere>(point3(2, 3.5, 3), 0.5, bright_orange));
+    
+    // Smaller floating fairy lights
+    world.add(make_shared<sphere>(point3(-1, 5, 1), 0.25, bright_cyan));
+    world.add(make_shared<sphere>(point3(1.5, 4.5, -2), 0.3, bright_magenta));
+    world.add(make_shared<sphere>(point3(-2.5, 3, 3), 0.28, bright_lime));
+    world.add(make_shared<sphere>(point3(3.5, 5, 0), 0.22, bright_purple));
+    world.add(make_shared<sphere>(point3(-3.5, 4, -1), 0.26, bright_orange));
+    world.add(make_shared<sphere>(point3(0.5, 6, 2), 0.2, bright_cyan));
+    world.add(make_shared<sphere>(point3(-1.5, 6.5, -1), 0.24, bright_magenta));
+    
+    // Colored mystical fog clouds
+    auto cyan_mist = make_shared<sphere>(point3(-2, 2, 0), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cyan_mist, 0.3, color(0.2, 0.8, 1.0)));
+    
+    auto purple_mist = make_shared<sphere>(point3(2, 2.5, -2), 2.8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_mist, 0.25, color(0.7, 0.3, 0.9)));
+    
+    auto lime_mist = make_shared<sphere>(point3(0, 3, 3), 2.3, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(lime_mist, 0.35, color(0.6, 1.0, 0.3)));
+    
+    auto magenta_mist = make_shared<sphere>(point3(-3, 4, 1), 2.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(magenta_mist, 0.4, color(1.0, 0.3, 0.8)));
+    
+    auto orange_mist = make_shared<sphere>(point3(3, 1.5, 2), 2.2, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(orange_mist, 0.28, color(1.0, 0.6, 0.2)));
+    
+    // Glowing geometric crystals
+    auto crystal_purple = make_shared<lambertian>(color(0.8, 0.4, 1.0));
+    auto crystal_cyan = make_shared<lambertian>(color(0.3, 0.9, 1.0));
+    auto crystal_lime = make_shared<lambertian>(color(0.7, 1.0, 0.3));
+    
+    // Crystal structures using boxes
+    shared_ptr<hittable> crystal1 = box(point3(-1.5, 0, -1), point3(-0.8, 1.8, -0.3), crystal_purple);
+    crystal1 = make_shared<rotate_y>(crystal1, 25);
+    world.add(crystal1);
+    
+    shared_ptr<hittable> crystal2 = box(point3(1, 0, 0.5), point3(1.6, 2.2, 1.1), crystal_cyan);
+    crystal2 = make_shared<rotate_y>(crystal2, -35);
+    world.add(crystal2);
+    
+    shared_ptr<hittable> crystal3 = box(point3(-0.3, 0, 2), point3(0.3, 1.5, 2.5), crystal_lime);
+    crystal3 = make_shared<rotate_y>(crystal3, 15);
+    world.add(crystal3);
+    
+    // Reflective spheres - magical orbs on pedestals
+    auto glass = make_shared<dielectric>(1.5);
+    world.add(make_shared<sphere>(point3(-2.5, 0.8, 1.5), 0.8, glass));
+    world.add(make_shared<sphere>(point3(2.8, 0.6, -0.5), 0.6, glass));
+    
+    // Metal spheres with color
+    world.add(make_shared<sphere>(point3(1.5, 0.5, -3), 0.5, make_shared<metal>(color(0.9, 0.5, 1.0), 0.1)));
+    world.add(make_shared<sphere>(point3(-3, 0.7, -2.5), 0.7, make_shared<metal>(color(0.5, 1.0, 0.9), 0.05)));
+    
+    // Layered atmospheric fog
+    shared_ptr<hittable> fog_layer1 = box(point3(-5, 0.2, -4), point3(-1, 2, 2), make_shared<lambertian>(color(0.5, 0.5, 0.5)));
+    fog_layer1 = make_shared<rotate_y>(fog_layer1, 20);
+    world.add(make_shared<volume>(fog_layer1, 0.05, color(0.5, 0.7, 1.0)));
+    
+    shared_ptr<hittable> fog_layer2 = box(point3(1, 0.5, -3), point3(5, 3, 3), make_shared<lambertian>(color(0.5, 0.5, 0.5)));
+    fog_layer2 = make_shared<rotate_y>(fog_layer2, -25);
+    world.add(make_shared<volume>(fog_layer2, 0.06, color(0.8, 0.5, 1.0)));
+    
+    // Ground mist
+    auto ground_fog = make_shared<sphere>(point3(0, 0.3, 0), 8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(ground_fog, 0.02, color(0.4, 0.6, 0.8)));
+    
+    // Thin magical atmosphere
+    auto atmosphere = make_shared<sphere>(point3(0, 0, 0), 100, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(atmosphere, 0.0002, color(0.4, 0.5, 0.7)));
+    
+    // Distant dim lights (like fireflies)
+    world.add(make_shared<sphere>(point3(-5, 2, -3), 0.15, make_shared<diffuse_light>(color(8, 10, 5))));
+    world.add(make_shared<sphere>(point3(5, 3, -2), 0.12, make_shared<diffuse_light>(color(10, 5, 8))));
+    world.add(make_shared<sphere>(point3(-4, 6, 2), 0.18, make_shared<diffuse_light>(color(5, 12, 10))));
+    world.add(make_shared<sphere>(point3(4, 7, 1), 0.14, make_shared<diffuse_light>(color(12, 8, 5))));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 700;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+    cam.background = color(0.05, 0.08, 0.15);  // Deep twilight blue
+
+    cam.vfov = 50;
+    cam.lookfrom = point3(0, 2, 10);
+    cam.lookat = point3(0, 2.5, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.3;  // Slight depth of field for dreamy effect
+    cam.focus_dist = 10.0;
+
+    cam.render(world);
+}
+
 int main(){
     //lessSpheresFast();
-    switch(12) {
+    switch(18) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -532,5 +1020,11 @@ int main(){
         case 10: checkered_triangles(); break;
         case 11: simple_light(); break;
         case 12: cornell_box(); break;
+        case 13: cornell_smoke(); break;
+        case 14: final_scene(400, 250, 4); break;
+        case 15: volume_showcase(); break;
+        case 16: purple(); break;
+        case 17: dark(); break;
+        case 18: colorful(); break;
     }
 }
