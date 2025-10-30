@@ -11,6 +11,16 @@
 #include "triangle.h"
 #include "volume.h"
 
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+#include <iostream>
+
+GLFWwindow* g_window = nullptr;
+GLuint g_tex = 0;
+bool g_use_opengl = true;
+int g_image_width = 0;
+int g_image_height = 0;
+
 void lostaSpheres() {
 
     hittable_list world;
@@ -73,7 +83,11 @@ void lostaSpheres() {
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);  // Original PNG output
+    }
 }
 
 void lessSpheresFast() {
@@ -113,7 +127,16 @@ void lessSpheresFast() {
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
 
-    cam.render(world);
+    std::cout << "g_use_opengl: " << g_use_opengl << std::endl;
+    std::cout << "g_window: " << g_window << std::endl;
+    
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void checkered_spheres() {
@@ -139,13 +162,22 @@ void checkered_spheres() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void earth() {
     auto earth_texture = make_shared<image_texture>("earthmap.jpg");
     auto earth_surface = make_shared<lambertian>(earth_texture);
     auto globe = make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
+
+    hittable_list world; 
+    world.add(globe);    
 
     camera cam;
 
@@ -162,7 +194,14 @@ void earth() {
 
     cam.defocus_angle = 0;
 
-    cam.render(hittable_list(globe));
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
+
 }
 
 void perlin_spheres(){
@@ -187,7 +226,13 @@ void perlin_spheres(){
 
     c.defocus_angle = 0;
 
-    c.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        c.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        c.render(world);
+    }
 
 }
 
@@ -222,7 +267,13 @@ void quadsPretty() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void quadsBasic(){
@@ -257,7 +308,13 @@ void quadsBasic(){
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void trianlgesBasic(){
@@ -300,7 +357,13 @@ void trianlgesBasic(){
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void trianglesPretty(){
@@ -400,7 +463,13 @@ void trianglesPretty(){
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void checkered_triangles() {
@@ -441,7 +510,13 @@ void checkered_triangles() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void simple_light() {
@@ -470,7 +545,13 @@ void simple_light() {
 
     c.defocus_angle = 0;
 
-    c.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        c.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        c.render(world);
+    }
 }
 
 void cornell_box(){
@@ -514,7 +595,13 @@ void cornell_box(){
 
     c.defocus_angle = 0;
 
-    c.render(w);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        c.render_opengl(w, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        c.render(w);
+    }
 
 }
 
@@ -559,7 +646,13 @@ void cornell_smoke(){
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void final_scene(int image_width, int samples_per_pixel, int max_depth) {
@@ -638,7 +731,13 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void volume_showcase() {
@@ -708,7 +807,13 @@ void volume_showcase() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void purple() {
@@ -795,7 +900,7 @@ void purple() {
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 600;
     cam.samples_per_pixel = 400;
-    cam.max_depth = 80;
+    cam.max_depth = 100;
     cam.background = color(0.15, 0.1, 0.25);  // Deep purple-blue
 
     cam.vfov = 55;
@@ -805,7 +910,13 @@ void purple() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void dark() {
@@ -887,7 +998,13 @@ void dark() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
 void colorful() {
@@ -1002,12 +1119,18 @@ void colorful() {
     cam.defocus_angle = 0.3;  // Slight depth of field for dreamy effect
     cam.focus_dist = 10.0;
 
-    cam.render(world);
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
 }
 
-int main(){
+void summon_image(){
     //lessSpheresFast();
-    switch(16) {
+    switch(4) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1027,4 +1150,82 @@ int main(){
         case 17: dark(); break;
         case 18: colorful(); break;
     }
+}
+
+
+
+// Add this function BEFORE main()
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    // Get texture dimensions
+    int tex_width, tex_height;
+    glBindTexture(GL_TEXTURE_2D, g_tex);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_height);
+    
+    if (tex_width == 0 || tex_height == 0) {
+        glViewport(0, 0, width, height);
+        return;
+    }
+    
+    float img_aspect = (float)tex_width / tex_height;
+    float win_aspect = (float)width / height;
+    
+    int vp_x, vp_y, vp_width, vp_height;
+    
+    if (win_aspect > img_aspect) {
+        // Window is wider - pillarboxing
+        vp_height = height;
+        vp_width = (int)(height * img_aspect);
+        vp_x = (width - vp_width) / 2;
+        vp_y = 0;
+    } else {
+        // Window is taller - letterboxing
+        vp_width = width;
+        vp_height = (int)(width / img_aspect);
+        vp_x = 0;
+        vp_y = (height - vp_height) / 2;
+    }
+    
+    glViewport(vp_x, vp_y, vp_width, vp_height);
+}
+
+int main() {
+    glfwInit();
+    g_window = glfwCreateWindow(800, 450, "Ray Tracer", NULL, NULL);
+    glfwMakeContextCurrent(g_window);
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    
+    glGenTextures(1, &g_tex);
+    glBindTexture(GL_TEXTURE_2D, g_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    // Set the callback
+    glfwSetFramebufferSizeCallback(g_window, framebuffer_size_callback);
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    g_use_opengl = true;
+    summon_image();
+    
+    while (!glfwWindowShouldClose(g_window)) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, g_tex);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 1); glVertex2f(-1, -1);
+        glTexCoord2f(1, 1); glVertex2f( 1, -1);
+        glTexCoord2f(1, 0); glVertex2f( 1,  1);
+        glTexCoord2f(0, 0); glVertex2f(-1,  1);
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+        
+        glfwSwapBuffers(g_window);
+        glfwPollEvents();
+    }
+    
+    glfwTerminate();
+    return 0;
 }

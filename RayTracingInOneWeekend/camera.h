@@ -7,6 +7,10 @@
 #include "hittable.h"
 #include "material.h"
 
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+#include <iostream>
+
 class camera {
     public:
         double aspect_ratio = 1.0;  //Ratio of image width over height
@@ -63,6 +67,76 @@ class camera {
             
             std::clog << "\rDone. Saved to " << filename << "\n";
         }
+
+        void render_opengl(const hittable& world, GLFWwindow* window, GLuint texture){
+            initialize();
+            
+            // Store dimensions in globals for aspect ratio calculation
+            extern int g_image_width;
+            extern int g_image_height;
+            g_image_width = image_width;
+            g_image_height = image_height;
+            
+            // Resize window to match image dimensions
+            glfwSetWindowSize(window, image_width, image_height);
+            glViewport(0, 0, image_width, image_height);
+            
+            std::vector<unsigned char> image(image_width * image_height * 3, 0);
+            
+            // Initialize the texture with the correct size
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_width, image_height, 
+                        0, GL_RGB, GL_UNSIGNED_BYTE, image.data());
+            
+            for(int j = 0; j < image_height; j++){
+                std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+                
+                for(int i = 0; i < image_width; i++){
+                    color pixel_color(0, 0, 0);
+                    for(int sample = 0; sample < samples_per_pixel; sample++){
+                        ray r = get_ray(i, j);
+                        pixel_color += ray_color(r, max_depth, world);
+                    }
+                    
+                    auto r = pixel_samples_scale * pixel_color.x();
+                    auto g = pixel_samples_scale * pixel_color.y();
+                    auto b = pixel_samples_scale * pixel_color.z();
+                    
+                    r = std::sqrt(r);
+                    g = std::sqrt(g);
+                    b = std::sqrt(b);
+                    
+                    int index = (j * image_width + i) * 3;
+                    image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                    image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                    image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
+                }
+                
+                // Update display every scanline
+                glBindTexture(GL_TEXTURE_2D, texture);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image_width, image_height, 
+                                GL_RGB, GL_UNSIGNED_BYTE, image.data());
+                
+                glClear(GL_COLOR_BUFFER_BIT);
+                glEnable(GL_TEXTURE_2D);
+                glBegin(GL_QUADS);
+                glTexCoord2f(0, 1); glVertex2f(-1, -1);
+                glTexCoord2f(1, 1); glVertex2f( 1, -1);
+                glTexCoord2f(1, 0); glVertex2f( 1,  1);
+                glTexCoord2f(0, 0); glVertex2f(-1,  1);
+                glEnd();
+                
+                glfwSwapBuffers(window);
+                glfwPollEvents();
+            }
+            
+            // Save to PNG file
+            const char* filename = "output.png";
+            stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
+            
+            std::clog << "\rDone. Saved to " << filename << "                    \n";
+        }
+
 
     private:
         int image_height;   //Rendered image height
