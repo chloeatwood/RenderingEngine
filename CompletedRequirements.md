@@ -59,12 +59,12 @@
     [ ] Adaptive sampling: 15
 
 ## Do this weekend
-    [ ] Quads and Triangles (Quads in Ray Tracing The Next Week. If Struggle with Triangles look at some of the supplemental materials provided by Schaffer and the triangle code we did in class)
+    [X] Quads and Triangles (Quads in Ray Tracing The Next Week. If Struggle with Triangles look at some of the supplemental materials provided by Schaffer and the triangle code we did in class)
 
 ## Due for Check-In after Quads and Triangles
-    [ ] Lights (Chapter 7: Ray Tracing The Next Week)
-    [ ] Instances (Chapter 8: Ray Tracing The Next Week)
-    [ ] Volumes (Chapter 9: Ray Tracing The Next Week)
+    [X] Lights (Chapter 7: Ray Tracing The Next Week)
+    [X] Instances (Chapter 8: Ray Tracing The Next Week)
+    [X] Volumes (Chapter 9: Ray Tracing The Next Week)
     [ ] Look into rendering/loading extrenal 3rd party triangle meshes (Maybe check other book)
 
 ## Due for Check-In After that
@@ -77,11 +77,7 @@
         - High Dynamic Rane Images?
         - Parallelization?
         - Look an see if any other features have been added to the list and sound interesting
-    [ ] IF importance sampling was completed previously, Look into picking some extra thing found online
-        - Ideas: Read about a Skybox maybe? That could be cool
-        - Toon/Non-Photorealistic Shading: Use the surface normal and light direction to compute brightness, then “step” the result into discrete color ranges (like 0.0–0.3 → dark, 0.3–0.7 → midtone, >0.7 → highlight).
-        - Chromatic Abberration: A lens effect where red, green, and blue light refract differently, producing color fringing at edges. -> For refractive materials, vary the index of refraction slightly per color channel when tracing rays.
-        - Progessive Rendering: Show a noisy image that refines as more samples are added. -> Render in passes and average results; update the display between passes.
+    [ ] Non-Photorealistic Rendering (cartoony / toon shading)?
 
 
 
