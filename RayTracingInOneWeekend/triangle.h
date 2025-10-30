@@ -77,4 +77,32 @@ class triangle : public hittable {
         vec3 w;
 };
 
+inline shared_ptr<hittable_list> tetrahedron(const point3& a, const point3& b, shared_ptr<material> mat){
+    auto sides = make_shared<hittable_list>();
+
+    auto min = point3(std::fmin(a.x(), b.x()), std::fmin(a.y(), b.y()), std::fmin(a.z(), b.z())); 
+    auto max = point3(std::fmax(a.x(), b.x()), std::fmax(a.y(), b.y()), std::fmax(a.z(), b.z())); 
+
+    // Four vertices of the tetrahedron
+    point3 v0 = point3(min.x(), min.y(), min.z());  // bottom-left-front
+    point3 v1 = point3(max.x(), min.y(), min.z());  // bottom-right-front
+    point3 v2 = point3(min.x(), max.y(), min.z());  // top-left-front
+    point3 v3 = point3(min.x(), min.y(), max.z());  // bottom-left-back
+
+    // Four triangular faces
+    // Base (v0, v1, v3)
+    sides->add(make_shared<triangle>(v0, v1 - v0, v3 - v0, mat));
+    
+    // Front face (v0, v2, v1)
+    sides->add(make_shared<triangle>(v0, v2 - v0, v1 - v0, mat));
+    
+    // Left face (v0, v3, v2)
+    sides->add(make_shared<triangle>(v0, v3 - v0, v2 - v0, mat));
+    
+    // Slant face (v1, v2, v3)
+    sides->add(make_shared<triangle>(v1, v2 - v1, v3 - v1, mat));
+
+    return sides;
+}
+
 #endif

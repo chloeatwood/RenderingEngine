@@ -1128,9 +1128,179 @@ void colorful() {
     }
 }
 
+void liquidy_triangles() {
+    hittable_list world;
+
+    // Dark liquid floor
+    auto liquid_floor = make_shared<lambertian>(color(0.05, 0.1, 0.15));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, liquid_floor));
+    
+    // Glowing liquid-colored lights
+    auto aqua_glow = make_shared<diffuse_light>(color(8, 18, 20));
+    auto teal_glow = make_shared<diffuse_light>(color(5, 20, 18));
+    auto cyan_glow = make_shared<diffuse_light>(color(10, 22, 25));
+    auto deep_blue_glow = make_shared<diffuse_light>(color(8, 15, 25));
+    auto turquoise_glow = make_shared<diffuse_light>(color(12, 25, 22));
+    
+    // Floating light orbs like water droplets
+    world.add(make_shared<sphere>(point3(-2, 4, -1), 0.4, aqua_glow));
+    world.add(make_shared<sphere>(point3(2.5, 3.5, 0), 0.5, teal_glow));
+    world.add(make_shared<sphere>(point3(0, 5, 2), 0.35, cyan_glow));
+    world.add(make_shared<sphere>(point3(-3, 3, 1), 0.45, deep_blue_glow));
+    world.add(make_shared<sphere>(point3(3, 4.5, -2), 0.38, turquoise_glow));
+    
+    // Smaller droplet lights
+    world.add(make_shared<sphere>(point3(-1, 6, 0), 0.2, aqua_glow));
+    world.add(make_shared<sphere>(point3(1.5, 5.5, -1), 0.25, teal_glow));
+    world.add(make_shared<sphere>(point3(-2.5, 4.5, 2), 0.22, cyan_glow));
+    
+    // Liquid-colored translucent materials
+    auto liquid_cyan = make_shared<lambertian>(color(0.2, 0.7, 0.8));
+    auto liquid_teal = make_shared<lambertian>(color(0.2, 0.8, 0.7));
+    auto liquid_aqua = make_shared<lambertian>(color(0.3, 0.9, 0.9));
+    auto liquid_blue = make_shared<lambertian>(color(0.2, 0.6, 0.9));
+    
+    // Flowing triangular shards - like crystallized water
+    // Diagonal flowing pattern
+    shared_ptr<hittable> shard1 = tetrahedron(point3(-2, 0, -1), point3(-1, 2.5, 0), liquid_cyan);
+    shard1 = make_shared<rotate_y>(shard1, 15);
+    world.add(shard1);
+    
+    shared_ptr<hittable> shard2 = tetrahedron(point3(1.5, 0, -0.5), point3(2.5, 2.8, 0.5), liquid_teal);
+    shard2 = make_shared<rotate_y>(shard2, -25);
+    world.add(shard2);
+    
+    shared_ptr<hittable> shard3 = tetrahedron(point3(-0.5, 0, 1.5), point3(0.5, 3, 2.5), liquid_aqua);
+    shard3 = make_shared<rotate_y>(shard3, 35);
+    world.add(shard3);
+    
+    shared_ptr<hittable> shard4 = tetrahedron(point3(-3, 0.5, 0.5), point3(-2, 2.2, 1.5), liquid_blue);
+    shard4 = make_shared<rotate_y>(shard4, -40);
+    world.add(shard4);
+    
+    shared_ptr<hittable> shard5 = tetrahedron(point3(2.5, 0, 1), point3(3.5, 2.5, 2), liquid_cyan);
+    shard5 = make_shared<rotate_y>(shard5, 50);
+    world.add(shard5);
+    
+    // Glass water droplets
+    auto glass = make_shared<dielectric>(1.33);  // Water's refractive index
+    world.add(make_shared<sphere>(point3(-2, 0.6, 1), 0.6, glass));
+    world.add(make_shared<sphere>(point3(2, 0.5, -1.5), 0.5, glass));
+    world.add(make_shared<sphere>(point3(0, 0.4, -2), 0.4, glass));
+    
+    // Metallic liquid mercury-like spheres
+    world.add(make_shared<sphere>(point3(-3.5, 0.5, -1), 0.5, make_shared<metal>(color(0.7, 0.9, 1.0), 0.02)));
+    world.add(make_shared<sphere>(point3(3.5, 0.6, 1), 0.6, make_shared<metal>(color(0.6, 0.95, 0.95), 0.05)));
+    
+    // Watery mist clouds
+    auto cyan_mist = make_shared<sphere>(point3(-1.5, 2, 0), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cyan_mist, 0.4, color(0.2, 0.7, 0.9)));
+    
+    auto teal_mist = make_shared<sphere>(point3(2, 2.5, -1), 2.8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(teal_mist, 0.35, color(0.3, 0.9, 0.8)));
+    
+    auto aqua_mist = make_shared<sphere>(point3(-1, 3.5, 2), 2.2, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(aqua_mist, 0.38, color(0.4, 0.95, 0.95)));
+    
+    // Flowing fog layers
+    shared_ptr<hittable> fog_flow1 = box(point3(-4, 0.3, -3), point3(-0.5, 2.5, 1), make_shared<lambertian>(color(0.5, 0.5, 0.5)));
+    fog_flow1 = make_shared<rotate_y>(fog_flow1, 30);
+    world.add(make_shared<volume>(fog_flow1, 0.08, color(0.3, 0.8, 0.9)));
+    
+    shared_ptr<hittable> fog_flow2 = box(point3(0.5, 0.5, -2), point3(4, 3, 2), make_shared<lambertian>(color(0.5, 0.5, 0.5)));
+    fog_flow2 = make_shared<rotate_y>(fog_flow2, -35);
+    world.add(make_shared<volume>(fog_flow2, 0.07, color(0.4, 0.9, 0.85)));
+    
+    // Water surface mist
+    auto surface_mist = make_shared<sphere>(point3(0, 0.2, 0), 6, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(surface_mist, 0.03, color(0.4, 0.8, 0.9)));
+    
+    // Underwater atmosphere effect
+    auto water_atmosphere = make_shared<sphere>(point3(0, 0, 0), 80, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(water_atmosphere, 0.0005, color(0.3, 0.7, 0.9)));
+    
+    // Distant glowing water particles
+    world.add(make_shared<sphere>(point3(-5, 3, -2), 0.15, make_shared<diffuse_light>(color(6, 15, 18))));
+    world.add(make_shared<sphere>(point3(5, 4, -1), 0.18, make_shared<diffuse_light>(color(8, 18, 20))));
+    world.add(make_shared<sphere>(point3(-4, 5, 2), 0.12, make_shared<diffuse_light>(color(10, 20, 18))));
+    world.add(make_shared<sphere>(point3(4, 6, 1), 0.16, make_shared<diffuse_light>(color(7, 22, 22))));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 700;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+    cam.background = color(0.02, 0.08, 0.12);  // Deep underwater blue
+
+    cam.vfov = 45;
+    cam.lookfrom = point3(0, 2.5, 9);
+    cam.lookat = point3(0, 2, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.4;  // Watery depth of field
+    cam.focus_dist = 9.0;
+
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
+void triangle_test() {
+    hittable_list world;
+
+    // Floor
+    auto floor_mat = make_shared<lambertian>(color(0.2, 0.2, 0.2));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, floor_mat));
+    
+    // Three tetrahedrons with different materials
+    auto cyan = make_shared<lambertian>(color(0.2, 0.7, 0.8));
+    auto glass = make_shared<dielectric>(1.5);
+    auto shiny_metal = make_shared<metal>(color(0.4, 0.8, 0.9), 0.1);
+    
+    shared_ptr<hittable> tet1 = tetrahedron(point3(-2, 0, -1), point3(0, 2.5, 1), cyan);
+    tet1 = make_shared<rotate_y>(tet1, 40);
+    world.add(tet1);
+    
+    shared_ptr<hittable> tet2 = tetrahedron(point3(0, 0, -1), point3(2, 2.5, 1), glass);
+    tet2 = make_shared<rotate_y>(tet2, -50);
+    world.add(tet2);
+    
+    shared_ptr<hittable> tet3 = tetrahedron(point3(-1, 1.5, 0), point3(1, 4, 2), shiny_metal);
+    tet3 = make_shared<rotate_y>(tet3, 70);
+    world.add(tet3);
+    
+    // Light
+    auto light = make_shared<diffuse_light>(color(4, 4, 4));
+    world.add(make_shared<sphere>(point3(3, 6, 2), 2, light));
+
+    camera cam;
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 700;
+    cam.samples_per_pixel = 200;
+    cam.max_depth = 50;
+    cam.background = color(0.05, 0.05, 0.1);
+
+    cam.vfov = 50;
+    cam.lookfrom = point3(0, 2.5, 7);
+    cam.lookat = point3(0, 2, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.focus_dist = 7.0;
+
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
 void summon_image(){
     //lessSpheresFast();
-    switch(4) {
+    switch(20) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1149,6 +1319,8 @@ void summon_image(){
         case 16: purple(); break;
         case 17: dark(); break;
         case 18: colorful(); break;
+        case 19: liquidy_triangles(); break;
+        case 20: triangle_test(); break;
     }
 }
 
