@@ -1326,7 +1326,7 @@ void summon_image(){
 
 
 
-// Add this function BEFORE main()
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     // Get texture dimensions
     int tex_width, tex_height;
