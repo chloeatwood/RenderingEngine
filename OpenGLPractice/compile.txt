@@ -1,0 +1,2 @@
+g++ main.cpp glad/glad.c -o program -Iinclude -lglfw3 -lopengl32 -lgdi32
+./program.exe

@@ -795,7 +795,7 @@ void purple() {
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 600;
     cam.samples_per_pixel = 400;
-    cam.max_depth = 50;
+    cam.max_depth = 80;
     cam.background = color(0.15, 0.1, 0.25);  // Deep purple-blue
 
     cam.vfov = 55;
@@ -1007,7 +1007,7 @@ void colorful() {
 
 int main(){
     //lessSpheresFast();
-    switch(18) {
+    switch(16) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
