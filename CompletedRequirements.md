@@ -6,7 +6,7 @@
 
     [X] Ray/sphere intersections -> Book 1
 
-    [X] Ray/triangle intersections -> Not in Ray Tracing Series?
+    [X] Ray/triangle intersections -> Not in Ray Tracing Series
 
     [X] The ability to load textures (file format(s) of your choice; may use third-party libraries) -> Book 2
 
@@ -20,9 +20,9 @@
 
     [X] Emissive materials (lights) -> Book 2
 
-## Must choose at least 25 for a C-, 75 for guaranteed A (would be over-exaguration):
+## Must choose at least 25 for a C-,  + 75 for guaranteed A + Importance Sampling (would be over-exaguration):
 
-    [ ] High dynamic range images: 10 -> Book 3
+    [ ] High dynamic range images: 10 
 
     [X] Volume rendering (smoke, clouds, etc.): 10 -> Book 2
 
@@ -32,7 +32,7 @@
 
     [ ] Spectral rendering: 30
 
-    [ ] BRDF materials (Bi-directional reflectance distribution functions): 30 -> Partiall in book 3
+    [ ] BRDF materials (Bi-directional reflectance distribution functions): 30
 
     [ ] Subsurface scattering (BSSRDFs): 30
 
@@ -44,13 +44,13 @@
 
     [X] Perlin noise: 10 -> Book 1 and Book 2
 
-    [ ] Cube maps: 15 -> book 3
+    [ ] Cube maps: 15
 
     [ ] Importance sampling: 15 -> Book 3
 
-    [ ] Parallelization: 10 -> ?
+    [ ] Parallelization: 10 
 
-    [ ] Normal interpolation (smooth shading): 5 -> Book 2
+    [ ] Normal interpolation (smooth shading): 5 
 
     [ ] Hybrid rendering with a GPU (OpenGL/DirectX + ray tracing): 20
 
@@ -65,19 +65,19 @@
     [X] Lights (Chapter 7: Ray Tracing The Next Week)
     [X] Instances (Chapter 8: Ray Tracing The Next Week)
     [X] Volumes (Chapter 9: Ray Tracing The Next Week)
-    [ ] Look into rendering/loading extrenal 3rd party triangle meshes (Maybe check other book)
 
-## Due for Check-In After that
-    [ ] Load/Render Triangle meshes stuff
-    [ ] Importance Sampling? Depends on how long the meshes stuff takes
+## Before Thanksgiving Break have done
+    [ ] Triangle Mesh loading
+    [ ] Normal Interpolation
+    [ ] Start Importance Sampling
 
-## Due After that (Aim for to complete this by Thanksgiving break so all I gotta worry about after that is the worst part - the paper)
-    [ ] Finish Importance Sampling if did not get to
-    [ ] Aim for about 20 more points from the extra list
-        - High Dynamic Rane Images?
-        - Parallelization?
-        - Look an see if any other features have been added to the list and sound interesting
-    [ ] Non-Photorealistic Rendering (cartoony / toon shading)?
+## During Thanksgiving Break
+    [ ] Finish Importance Sampling
+    [ ] Parallelization or Cube Maps
+    [ ] Non-realisitc toon/cel shading
+
+## After Thanksgiving Break 
+    [ ] Paper
 
 
 
