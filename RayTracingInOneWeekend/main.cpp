@@ -10,6 +10,7 @@
 #include "quad.h"
 #include "triangle.h"
 #include "volume.h"
+#include "mesh_loader.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -1298,9 +1299,50 @@ void triangle_test() {
     }
 }
 
+void meshBasic(){
+    hittable_list world;
+
+    // Materials
+    auto mesh_material = make_shared<lambertian>(color(0.8, 0.3, 0.3));
+    auto ground = make_shared<lambertian>(color(0.5, 0.5, 0.5));
+
+    // Add a ground sphere for reference
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground));
+
+    // Load the mesh - try different scales
+    std::cout << "Loading cube mesh..." << std::endl;
+    auto mesh = load_obj_mesh("meshes/cube.obj", mesh_material, point3(0, 0, 0), 2.0);
+    world.add(mesh);
+    std::cout << "Mesh added to world" << std::endl;
+
+    camera cam;
+
+    cam.aspect_ratio      = 16.0 / 9.0;  // Changed from 1.0
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 10;  // Reduced for faster testing
+    cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
+
+    cam.vfov     = 40;
+    cam.lookfrom = point3(13, 2, 3);  // Different camera position
+    cam.lookat   = point3(0, 0, 0);
+    cam.vup      = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
+}
+
+
 void summon_image(){
     //lessSpheresFast();
-    switch(20) {
+    switch(21) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1321,6 +1363,7 @@ void summon_image(){
         case 18: colorful(); break;
         case 19: liquidy_triangles(); break;
         case 20: triangle_test(); break;
+        case 21: meshBasic(); break;
     }
 }
 

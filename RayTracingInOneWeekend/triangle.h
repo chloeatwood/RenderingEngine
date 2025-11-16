@@ -3,6 +3,8 @@
 
 #include "hittable.h"
 
+struct mesh_tag {};
+
 class triangle : public hittable {
     public:
         triangle(const point3& Q, const vec3& u, const vec3& v, shared_ptr<material> mat) : Q(Q), u(u), v(v), mat(mat){
@@ -11,6 +13,16 @@ class triangle : public hittable {
             D = dot(normal, Q);
             w = n / dot(n, n);
 
+            set_bounding_box();
+        }
+
+        //Constructor for loading triangle meshses
+        triangle(mesh_tag, const point3& v0, const point3& v1, const point3& v2, shared_ptr<material> mat) 
+        : Q(v0), u(v1 - v0), v(v2 - v0), mat(mat) {
+            auto n = cross(u, v);
+            normal = unit_vector(n);
+            D = dot(normal, Q);
+            w = n / dot(n, n);
             set_bounding_box();
         }
 
