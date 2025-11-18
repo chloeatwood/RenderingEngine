@@ -287,8 +287,12 @@ void quadsBasic(){
     auto upper_orange = make_shared<lambertian>(color(1.0, 0.5, 0.0));
     auto lower_teal   = make_shared<lambertian>(color(0.2, 0.8, 0.8));
 
+
+    auto purpleTexture = make_shared<image_texture>("purpleTexture.jpg");
+    auto purpleText = make_shared<lambertian>(purpleTexture);
+
     // Quads
-    world.add(make_shared<quad>(point3(-3,-2, 5), vec3(0, 0,-4), vec3(0, 4, 0), left_red));
+    world.add(make_shared<quad>(point3(-3,-2, 5), vec3(0, 0,-4), vec3(0, 4, 0), purpleText));
     world.add(make_shared<quad>(point3(-2,-2, 0), vec3(4, 0, 0), vec3(0, 4, 0), back_green));
     world.add(make_shared<quad>(point3( 3,-2, 1), vec3(0, 0, 4), vec3(0, 4, 0), right_blue));
     world.add(make_shared<quad>(point3(-2, 3, 1), vec3(4, 0, 0), vec3(0, 0, 4), upper_orange));
@@ -1452,7 +1456,7 @@ void cornell_bat(){
 
 void summon_image(){
     //lessSpheresFast();
-    switch(20) {
+    switch(7) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
