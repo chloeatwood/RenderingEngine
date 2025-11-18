@@ -1317,14 +1317,14 @@ void meshBasic(){
 
     camera cam;
 
-    cam.aspect_ratio      = 16.0 / 9.0;  // Changed from 1.0
+    cam.aspect_ratio      = 16.0 / 9.0;  
     cam.image_width       = 400;
-    cam.samples_per_pixel = 10;  // Reduced for faster testing
+    cam.samples_per_pixel = 10;  
     cam.max_depth         = 50;
     cam.background = color(0.70, 0.80, 1.00);
 
     cam.vfov     = 40;
-    cam.lookfrom = point3(13, 2, 3);  // Different camera position
+    cam.lookfrom = point3(13, 2, 3); 
     cam.lookat   = point3(0, 0, 0);
     cam.vup      = vec3(0, 1, 0);
 
@@ -1339,10 +1339,110 @@ void meshBasic(){
     }
 }
 
+void mesh(){
+    hittable_list world;
+
+    // Materials
+    auto mesh_material = make_shared<lambertian>(color(0.128, 0, 0.128));
+    auto ground = make_shared<lambertian>(color(0.5, 0.5, 0.5));
+
+    // Add a ground sphere for reference
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground));
+
+    // Load the mesh - try different scales
+    std::cout << "Loading bat mesh..." << std::endl;
+    auto mesh = load_obj_mesh("meshes/bat.obj", mesh_material, point3(0, 0, 0), 2.5);
+    world.add(mesh);
+    std::cout << "Mesh added to world" << std::endl;
+
+    camera cam;
+
+    cam.aspect_ratio      = 16.0 / 9.0;  
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 50;  
+    cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
+
+    cam.vfov     = 30;
+    cam.lookfrom = point3(13, 7, 13);  
+    cam.lookat   = point3(0, 0, 0);
+    cam.vup      = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world);
+    }
+}
+
+//TODO: Run at home with 1500 samples_per_pixel on PC to get good cornell_bat()
+void cornell_bat(){
+    hittable_list w;
+
+    auto purple = make_shared<lambertian>(color(.65, .05, .65));
+    auto white = make_shared<lambertian>(color(.73, .73, .73));
+    auto lime_green = make_shared<lambertian>(color(.45, .73, .12));
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+    auto dark_purple = make_shared<lambertian>(color(0.128, 0, 0.128));
+
+
+    auto albedo = color::random(0.5, 1);
+    auto fuzz = random_double(0, 0.5);
+    auto metal_mat = make_shared<metal>(albedo, fuzz);
+
+    w.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), lime_green));
+    w.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), purple));
+    w.add(make_shared<quad>(point3(343, 554, 332), vec3(-130, 0, 0), vec3(0, 0, -105), light));
+
+    w.add(make_shared<quad>(point3(0, 0, 0), vec3(555, 0, 0), vec3(0, 0, 555), white));
+    w.add(make_shared<quad>(point3(555, 555, 555), vec3(-555, 0, 0), vec3(0, 0, -555), white));
+    w.add(make_shared<quad>(point3(0, 0, 555), vec3(555, 0, 0), vec3(0, 555, 0), white));
+
+    // First bat - purple, upper position
+    std::cout << "Loading bat mesh 1..." << std::endl;
+    auto bat1 = load_obj_mesh("meshes/bat.obj", dark_purple, point3(165, 330, 165), 100.0);
+    w.add(bat1);
+    std::cout << "Bat 1 added to world" << std::endl;
+
+    // Second bat - glass, lower position
+    std::cout << "Loading bat mesh 2..." << std::endl;
+    auto bat2 = load_obj_mesh("meshes/bat.obj", metal_mat, point3(450, 100, 180), 100.0);
+    w.add(bat2);
+    std::cout << "Bat 2 added to world" << std::endl;
+
+    camera c;
+
+    c.aspect_ratio = 1.0;
+    c.image_width = 600;
+    c.samples_per_pixel = 20;
+    c.max_depth = 50;
+    c.background = color(0, 0, 0);
+
+    c.vfov = 40;
+    c.lookfrom = point3(278, 278, -800);
+    c.lookat = point3(278, 278, 0);
+    c.vup = vec3(0, 1, 0);
+
+    c.defocus_angle = 0;
+
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        c.render_opengl(w, g_window, g_tex);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        c.render(w);
+    }
+}
+
+
 
 void summon_image(){
     //lessSpheresFast();
-    switch(21) {
+    switch(23) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1364,6 +1464,8 @@ void summon_image(){
         case 19: liquidy_triangles(); break;
         case 20: triangle_test(); break;
         case 21: meshBasic(); break;
+        case 22: mesh(); break;
+        case 23: cornell_bat(); break;
     }
 }
 
