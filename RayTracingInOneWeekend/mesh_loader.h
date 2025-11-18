@@ -33,6 +33,9 @@ inline shared_ptr<hittable_list> load_obj_mesh(const std::string& filename, shar
 
     std::cout << "Loading Mesh: " << filename << std::endl;
     std::cout << "  Vertices: " << attrib.vertices.size() / 3 << std::endl;
+    std::cout << " Normals: " << attrib.normals.size() / 3 << std:: endl;
+
+    bool has_normals = !attrib.normals.empty();
 
     //loop through shapes in the file
     for( size_t s = 0; s < shapes.size(); s++){
@@ -53,6 +56,8 @@ inline shared_ptr<hittable_list> load_obj_mesh(const std::string& filename, shar
             //Get the vertices of the triangle
             point3 vertices[3];
 
+            vec3 normals[3];
+
             for(size_t v = 0; v < 3; v++){
                 tinyobj::index_t idx = shapes[s].mesh.indices[in_offset + v];
 
@@ -64,10 +69,21 @@ inline shared_ptr<hittable_list> load_obj_mesh(const std::string& filename, shar
                 //apply scale and offset
                 vertices[v] = point3(vx * scale, vy * scale, vz * scale) + offset;
 
+                if(has_normals && idx.normal_index >= 0){
+                    double nx = attrib.normals[3 * idx.normal_index + 0];
+                    double ny = attrib.normals[3 * idx.normal_index + 1];
+                    double nz = attrib.normals[3 * idx.normal_index + 2];
+                    normals[v] = vec3(nx, ny, nx);
+                }
+
             }
 
             //create the trianlge
-            mesh->add(make_shared<triangle>(mesh_tag{}, vertices[0], vertices[1], vertices[2], mat));
+            if(has_normals){
+                mesh->add(make_shared<triangle>(mesh_tag{}, vertices[0], vertices[1], vertices[2], mat, normals[0], normals[1], normals[2]));
+            }else{
+                mesh->add(make_shared<triangle>(mesh_tag{}, vertices[0], vertices[1], vertices[2], mat));
+            }
 
             in_offset += fv;
         }

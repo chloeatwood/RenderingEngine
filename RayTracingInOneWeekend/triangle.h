@@ -7,7 +7,7 @@ struct mesh_tag {};
 
 class triangle : public hittable {
     public:
-        triangle(const point3& Q, const vec3& u, const vec3& v, shared_ptr<material> mat) : Q(Q), u(u), v(v), mat(mat){
+        triangle(const point3& Q, const vec3& u, const vec3& v, shared_ptr<material> mat) : Q(Q), u(u), v(v), mat(mat), has_vertex_normals(false){
             auto n = cross(u, v);
             normal = unit_vector(n);
             D = dot(normal, Q);
@@ -17,8 +17,17 @@ class triangle : public hittable {
         }
 
         //Constructor for loading triangle meshses
+        triangle(mesh_tag, const point3& v0, const point3& v1, const point3& v2, shared_ptr<material> mat, const vec3& n0, vec3& n1, vec3& n2) 
+        : Q(v0), u(v1 - v0), v(v2 - v0), mat(mat), has_vertex_normals(true), n0(n0), n1(n1), n2(n2){
+            auto n = cross(u, v);
+            normal = unit_vector(n);
+            D = dot(normal, Q);
+            w = n / dot(n, n);
+            set_bounding_box();
+        }
+
         triangle(mesh_tag, const point3& v0, const point3& v1, const point3& v2, shared_ptr<material> mat) 
-        : Q(v0), u(v1 - v0), v(v2 - v0), mat(mat) {
+        : Q(v0), u(v1 - v0), v(v2 - v0), mat(mat), has_vertex_normals(false){
             auto n = cross(u, v);
             normal = unit_vector(n);
             D = dot(normal, Q);
@@ -65,6 +74,16 @@ class triangle : public hittable {
             rec.mat = mat;
             rec.set_face_normal(r, normal);
 
+
+            //For normal interopolation
+            if(has_vertex_normals){
+                vec3 interpolated_normal = (1.0 - alpha - beta) * n0 + alpha * n1 + beta * n2;
+                interpolated_normal = unit_vector(interpolated_normal);
+                rec.set_face_normal(r, interpolated_normal);
+            }else{
+                rec.set_face_normal(r, normal);
+            }
+
             return true;
 
         }
@@ -87,6 +106,8 @@ class triangle : public hittable {
         vec3 normal;
         double D;
         vec3 w;
+        bool has_vertex_normals;
+        vec3 n0, n1, n2;
 };
 
 inline shared_ptr<hittable_list> tetrahedron(const point3& a, const point3& b, shared_ptr<material> mat){

@@ -1456,7 +1456,7 @@ void cornell_bat(){
 
 void summon_image(){
     //lessSpheresFast();
-    switch(7) {
+    switch(22) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
