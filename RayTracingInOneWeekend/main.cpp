@@ -1254,6 +1254,12 @@ void triangle_test() {
 
     // Floor
     auto floor_mat = make_shared<lambertian>(color(0.2, 0.2, 0.2));
+
+
+    auto purpleTexture = make_shared<image_texture>("purpleTexture.jpg");
+    auto purpleText = make_shared<lambertian>(purpleTexture);
+
+
     world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, floor_mat));
     
     // Three tetrahedrons with different materials
@@ -1261,17 +1267,21 @@ void triangle_test() {
     auto glass = make_shared<dielectric>(1.5);
     auto shiny_metal = make_shared<metal>(color(0.4, 0.8, 0.9), 0.1);
     
-    shared_ptr<hittable> tet1 = tetrahedron(point3(-2, 0, -1), point3(0, 2.5, 1), cyan);
+    shared_ptr<hittable> tet1 = tetrahedron(point3(-2, 0, -1), point3(0, 2.5, 1), purpleText);
     tet1 = make_shared<rotate_y>(tet1, 40);
     world.add(tet1);
     
-    shared_ptr<hittable> tet2 = tetrahedron(point3(0, 0, -1), point3(2, 2.5, 1), glass);
+    shared_ptr<hittable> tet2 = tetrahedron(point3(0, 0, -1), point3(2, 2.5, 1), purpleText);
     tet2 = make_shared<rotate_y>(tet2, -50);
     world.add(tet2);
     
-    shared_ptr<hittable> tet3 = tetrahedron(point3(-1, 1.5, 0), point3(1, 4, 2), shiny_metal);
+    shared_ptr<hittable> tet3 = tetrahedron(point3(-1, 1.5, 0), point3(1, 4, 2), purpleText);
     tet3 = make_shared<rotate_y>(tet3, 70);
     world.add(tet3);
+
+    shared_ptr<hittable> tet4 = tetrahedron(point3(1, 2, 1), point3(3, 2.5, 15), purpleText);
+    tet4 = make_shared<rotate_y>(tet4, 100);
+    world.add(tet4);
     
     // Light
     auto light = make_shared<diffuse_light>(color(4, 4, 4));
@@ -1442,7 +1452,7 @@ void cornell_bat(){
 
 void summon_image(){
     //lessSpheresFast();
-    switch(23) {
+    switch(20) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
