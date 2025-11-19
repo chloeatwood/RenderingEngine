@@ -33,7 +33,7 @@ inline shared_ptr<hittable_list> load_obj_mesh(const std::string& filename, shar
 
     std::cout << "Loading Mesh: " << filename << std::endl;
     std::cout << "  Vertices: " << attrib.vertices.size() / 3 << std::endl;
-    std::cout << " Normals: " << attrib.normals.size() / 3 << std:: endl;
+    std::cout << "  Normals: " << attrib.normals.size() / 3 << std:: endl;
 
     bool has_normals = !attrib.normals.empty();
 

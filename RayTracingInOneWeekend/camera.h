@@ -45,6 +45,11 @@ class camera {
             // Test OpenMP
             #ifdef _OPENMP
                 std::cout << "OpenMP enabled! Using " << omp_get_max_threads() << " threads.\n";
+
+                int total_cores = omp_get_max_threads();
+                int threads_to_use = std::max(1, total_cores - 3);
+                omp_set_num_threads(threads_to_use);
+                std::cout << "Using " << threads_to_use << " threads for rendering" << std::endl;
             #else
                 std::cout << "OpenMP NOT enabled!\n";
             #endif
@@ -125,7 +130,10 @@ class camera {
             initialize();
             
             #ifdef _OPENMP
-                std::cout << "OpenMP enabled! Using " << omp_get_max_threads() << " threads.\n";
+                int total_cores = omp_get_max_threads();
+                int threads_to_use = std::max(1, total_cores - 3);
+                omp_set_num_threads(threads_to_use);
+                std::cout << "OpenMP enabled! Using " << threads_to_use << " threads.\n";
             #endif
             
             extern int g_image_width;

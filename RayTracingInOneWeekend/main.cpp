@@ -1019,21 +1019,21 @@ void colorful() {
     auto forest_floor = make_shared<lambertian>(color(0.1, 0.15, 0.08));
     world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, forest_floor));
     
-    // Floating glowing orbs - fairy lights scattered throughout
+    // Floating glowing orbs 
     auto bright_cyan = make_shared<diffuse_light>(color(12, 15, 18));
     auto bright_magenta = make_shared<diffuse_light>(color(18, 8, 15));
     auto bright_lime = make_shared<diffuse_light>(color(15, 20, 8));
     auto bright_purple = make_shared<diffuse_light>(color(15, 8, 20));
     auto bright_orange = make_shared<diffuse_light>(color(20, 12, 5));
     
-    // Large central glowing orbs
+    
     world.add(make_shared<sphere>(point3(0, 3, 0), 0.6, bright_cyan));
     world.add(make_shared<sphere>(point3(-3, 2.5, -2), 0.5, bright_magenta));
     world.add(make_shared<sphere>(point3(3, 2.8, -1), 0.55, bright_lime));
     world.add(make_shared<sphere>(point3(-2, 4, 2), 0.45, bright_purple));
     world.add(make_shared<sphere>(point3(2, 3.5, 3), 0.5, bright_orange));
     
-    // Smaller floating fairy lights
+    
     world.add(make_shared<sphere>(point3(-1, 5, 1), 0.25, bright_cyan));
     world.add(make_shared<sphere>(point3(1.5, 4.5, -2), 0.3, bright_magenta));
     world.add(make_shared<sphere>(point3(-2.5, 3, 3), 0.28, bright_lime));
@@ -1063,7 +1063,7 @@ void colorful() {
     auto crystal_cyan = make_shared<lambertian>(color(0.3, 0.9, 1.0));
     auto crystal_lime = make_shared<lambertian>(color(0.7, 1.0, 0.3));
     
-    // Crystal structures using boxes
+    // Crystal 
     shared_ptr<hittable> crystal1 = box(point3(-1.5, 0, -1), point3(-0.8, 1.8, -0.3), crystal_purple);
     crystal1 = make_shared<rotate_y>(crystal1, 25);
     world.add(crystal1);
@@ -1076,7 +1076,7 @@ void colorful() {
     crystal3 = make_shared<rotate_y>(crystal3, 15);
     world.add(crystal3);
     
-    // Reflective spheres - magical orbs on pedestals
+    // Reflective spheres 
     auto glass = make_shared<dielectric>(1.5);
     world.add(make_shared<sphere>(point3(-2.5, 0.8, 1.5), 0.8, glass));
     world.add(make_shared<sphere>(point3(2.8, 0.6, -0.5), 0.6, glass));
@@ -1407,6 +1407,7 @@ void cornell_bat(){
     auto albedo = color::random(0.5, 1);
     auto fuzz = random_double(0, 0.5);
     auto metal_mat = make_shared<metal>(albedo, fuzz);
+    auto glass = make_shared<dielectric>(1.5);
 
     w.add(make_shared<quad>(point3(555, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), lime_green));
     w.add(make_shared<quad>(point3(0, 0, 0), vec3(0, 555, 0), vec3(0, 0, 555), purple));
@@ -1428,11 +1429,19 @@ void cornell_bat(){
     w.add(bat2);
     std::cout << "Bat 2 added to world" << std::endl;
 
+
+    // Third bat - glass, lower position
+    std::cout << "Loading bat mesh 2..." << std::endl;
+    auto bat3 = load_obj_mesh("meshes/bat.obj", glass, point3(278, 278, 278), 80.0);
+    w.add(bat3);
+    std::cout << "Bat 3 added to world" << std::endl;
+
+
     camera c;
 
     c.aspect_ratio = 1.0;
     c.image_width = 600;
-    c.samples_per_pixel = 100;
+    c.samples_per_pixel = 3000;
     c.max_depth = 50;
     c.background = color(0, 0, 0);
 
@@ -1456,7 +1465,7 @@ void cornell_bat(){
 
 void summon_image(){
     //lessSpheresFast();
-    switch(22) {
+    switch(23) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
