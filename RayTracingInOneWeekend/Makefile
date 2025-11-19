@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -O2
+CXXFLAGS = -std=c++17 -O2 -fopenmp
 
 # Source files
 CPP_SOURCES = $(wildcard *.cpp)

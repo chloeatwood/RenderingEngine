@@ -12,7 +12,7 @@
 
     [X] Textured spheres and triangles -> Triangles not in Ray Tracing Series
 
-    [ ] The ability to load and render triangle meshes (file format(s) of your choice; may use third-party libraries for loading) -> Not in ray Tracing Series
+    [X] The ability to load and render triangle meshes (file format(s) of your choice; may use third-party libraries for loading) -> Not in ray Tracing Series
 
     [X] A spatial subdivision acceleration structure of your choice -> Book 2
 
@@ -40,7 +40,7 @@
 
     [X] Defocus blur/depth of field: 10 -> Book 1
     
-    [X] Object instancing: 10 -> Book 2, with quads/squares
+    [X] Object instancing: 10 -> Book 2
 
     [X] Perlin noise: 10 -> Book 1 and Book 2
 
@@ -48,9 +48,9 @@
 
     [ ] Importance sampling: 15 -> Book 3
 
-    [ ] Parallelization: 10 
+    [X] Parallelization: 10 
 
-    [ ] Normal interpolation (smooth shading): 5 
+    [X] Normal interpolation (smooth shading): 5 
 
     [ ] Hybrid rendering with a GPU (OpenGL/DirectX + ray tracing): 20
 
@@ -67,13 +67,14 @@
     [X] Volumes (Chapter 9: Ray Tracing The Next Week)
 
 ## Before Thanksgiving Break have done
-    [ ] Triangle Mesh loading
-    [ ] Normal Interpolation
-    [ ] Start Importance Sampling
+    [X] Triangle Mesh loading
+    [X] Normal Interpolation
+    [X] Parallelization
+    [ ] HDR
+    [ ] Cube/Environment Maps
 
 ## During Thanksgiving Break
-    [ ] Finish Importance Sampling
-    [ ] Parallelization or Cube Maps
+    [ ] Importance Sampling
     [ ] Non-realisitc toon/cel shading
 
 ## After Thanksgiving Break 

@@ -10,6 +10,14 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include <iostream>
+#include <atomic>
+#include <algorithm>
+#include <cmath>
+
+
+#ifdef _OPENMP
+    #include <omp.h>
+#endif
 
 class camera {
     public:
@@ -33,104 +41,183 @@ class camera {
             //it render as well
         void render(const hittable& world){
             initialize();
+            
+            // Test OpenMP
+            #ifdef _OPENMP
+                std::cout << "OpenMP enabled! Using " << omp_get_max_threads() << " threads.\n";
+            #else
+                std::cout << "OpenMP NOT enabled!\n";
+            #endif
+            
             const char* filename = "output.png";
             std::vector<unsigned char> image(image_width * image_height * 3);
             
-            for(int j = 0; j < image_height; j++){
-                std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-                for(int i = 0; i < image_width; i++){
-                    color pixel_color(0, 0, 0);
-                    for(int sample = 0; sample < samples_per_pixel; sample++){
-                        ray r = get_ray(i, j);
-                        pixel_color += ray_color(r, max_depth, world);
+            // Tile size (16x16)
+            const int tile_size = 16;
+            int num_tiles_x = (image_width + tile_size - 1) / tile_size;
+            int num_tiles_y = (image_height + tile_size - 1) / tile_size;
+            int total_tiles = num_tiles_x * num_tiles_y;
+            
+            std::atomic<int> tiles_completed(0);
+            
+            // Parallelize over tiles
+            #pragma omp parallel for schedule(dynamic)
+            for (int tile_idx = 0; tile_idx < total_tiles; tile_idx++) {
+                int tile_y = tile_idx / num_tiles_x;
+                int tile_x = tile_idx % num_tiles_x;
+                
+                int start_j = tile_y * tile_size;
+                int end_j = std::min(start_j + tile_size, image_height);
+                int start_i = tile_x * tile_size;
+                int end_i = std::min(start_i + tile_size, image_width);
+                
+                // Render this tile
+                for (int j = start_j; j < end_j; j++) {
+                    for (int i = start_i; i < end_i; i++) {
+                        color pixel_color(0, 0, 0);
+                        for (int sample = 0; sample < samples_per_pixel; sample++) {
+                            ray r = get_ray(i, j);
+                            pixel_color += ray_color(r, max_depth, world);
+                        }
+                        
+                        auto r = pixel_samples_scale * pixel_color.x();
+                        auto g = pixel_samples_scale * pixel_color.y();
+                        auto b = pixel_samples_scale * pixel_color.z();
+                        
+                        r = std::sqrt(r);
+                        g = std::sqrt(g);
+                        b = std::sqrt(b);
+                        
+                        int index = (j * image_width + i) * 3;
+                        image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                        image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                        image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                     }
-                    
-                    auto r = pixel_samples_scale * pixel_color.x();
-                    auto g = pixel_samples_scale * pixel_color.y();
-                    auto b = pixel_samples_scale * pixel_color.z();
-                    
-                    r = std::sqrt(r);
-                    g = std::sqrt(g);
-                    b = std::sqrt(b);
-                    
-                    int index = (j * image_width + i) * 3;
-                    image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
-                    image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
-                    image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                 }
                 
-                // Write every 10 scanlines (adjust as needed)
-                if (j % 10 == 0 || j == image_height - 1) {
-                    stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
+                // Update progress
+                tiles_completed++;
+                if (tiles_completed % 10 == 0 || tiles_completed == total_tiles) {
+                    #pragma omp critical
+                    {
+                        int scanlines_done = (tiles_completed * tile_size * tile_size) / image_width;
+                        std::clog << "\rProgress: " << (100 * tiles_completed / total_tiles) 
+                                << "% (" << tiles_completed << "/" << total_tiles << " tiles)" 
+                                << std::flush;
+                    }
+                }
+                
+                // Write periodically
+                if (tiles_completed % 50 == 0) {
+                    #pragma omp critical
+                    {
+                        stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
+                    }
                 }
             }
             
-            std::clog << "\rDone. Saved to " << filename << "\n";
+            // Final write
+            stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
+            std::clog << "\rDone. Saved to " << filename << "                    \n";
         }
 
         void render_opengl(const hittable& world, GLFWwindow* window, GLuint texture){
             initialize();
             
-            // Store dimensions in globals for aspect ratio calculation
+            #ifdef _OPENMP
+                std::cout << "OpenMP enabled! Using " << omp_get_max_threads() << " threads.\n";
+            #endif
+            
             extern int g_image_width;
             extern int g_image_height;
             g_image_width = image_width;
             g_image_height = image_height;
             
-            // Resize window to match image dimensions
             glfwSetWindowSize(window, image_width, image_height);
             glViewport(0, 0, image_width, image_height);
             
             std::vector<unsigned char> image(image_width * image_height * 3, 0);
             
-            // Initialize the texture with the correct size
             glBindTexture(GL_TEXTURE_2D, texture);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_width, image_height, 
                         0, GL_RGB, GL_UNSIGNED_BYTE, image.data());
             
-            for(int j = 0; j < image_height; j++){
-                std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+            const int tile_size = 16;
+            int num_tiles_x = (image_width + tile_size - 1) / tile_size;
+            int num_tiles_y = (image_height + tile_size - 1) / tile_size;
+            int total_tiles = num_tiles_x * num_tiles_y;
+            
+            //Create spiral tile order for spiral shaped rendering
+            std::vector<int> tile_order = generate_spiral_order(num_tiles_x, num_tiles_y);
+            
+            std::atomic<int> tiles_completed(0);
+            
+            // Parallelize over spiral tiles
+            #pragma omp parallel for schedule(dynamic)
+            for (int idx = 0; idx < total_tiles; idx++) {
+                int tile_idx = tile_order[idx];  
                 
-                for(int i = 0; i < image_width; i++){
-                    color pixel_color(0, 0, 0);
-                    for(int sample = 0; sample < samples_per_pixel; sample++){
-                        ray r = get_ray(i, j);
-                        pixel_color += ray_color(r, max_depth, world);
+                int tile_y = tile_idx / num_tiles_x;
+                int tile_x = tile_idx % num_tiles_x;
+                
+                int start_j = tile_y * tile_size;
+                int end_j = std::min(start_j + tile_size, image_height);
+                int start_i = tile_x * tile_size;
+                int end_i = std::min(start_i + tile_size, image_width);
+                
+                // Render this tile
+                for (int j = start_j; j < end_j; j++) {
+                    for (int i = start_i; i < end_i; i++) {
+                        color pixel_color(0, 0, 0);
+                        for (int sample = 0; sample < samples_per_pixel; sample++) {
+                            ray r = get_ray(i, j);
+                            pixel_color += ray_color(r, max_depth, world);
+                        }
+                        
+                        auto r = pixel_samples_scale * pixel_color.x();
+                        auto g = pixel_samples_scale * pixel_color.y();
+                        auto b = pixel_samples_scale * pixel_color.z();
+                        
+                        r = std::sqrt(r);
+                        g = std::sqrt(g);
+                        b = std::sqrt(b);
+                        
+                        int index = (j * image_width + i) * 3;
+                        image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                        image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                        image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                     }
-                    
-                    auto r = pixel_samples_scale * pixel_color.x();
-                    auto g = pixel_samples_scale * pixel_color.y();
-                    auto b = pixel_samples_scale * pixel_color.z();
-                    
-                    r = std::sqrt(r);
-                    g = std::sqrt(g);
-                    b = std::sqrt(b);
-                    
-                    int index = (j * image_width + i) * 3;
-                    image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
-                    image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
-                    image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                 }
                 
-                // Update display every scanline
-                glBindTexture(GL_TEXTURE_2D, texture);
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image_width, image_height, 
-                                GL_RGB, GL_UNSIGNED_BYTE, image.data());
+                tiles_completed++;
                 
-                glClear(GL_COLOR_BUFFER_BIT);
-                glEnable(GL_TEXTURE_2D);
-                glBegin(GL_QUADS);
-                glTexCoord2f(0, 1); glVertex2f(-1, -1);
-                glTexCoord2f(1, 1); glVertex2f( 1, -1);
-                glTexCoord2f(1, 0); glVertex2f( 1,  1);
-                glTexCoord2f(0, 0); glVertex2f(-1,  1);
-                glEnd();
-                
-                glfwSwapBuffers(window);
-                glfwPollEvents();
+                // Update display for spiral effect
+                if (tiles_completed % 2 == 0 || tiles_completed == total_tiles) {
+                    #pragma omp critical
+                    {
+                        std::clog << "\rProgress: " << (100 * tiles_completed / total_tiles) 
+                                << "% (" << tiles_completed << "/" << total_tiles << " tiles)" 
+                                << std::flush;
+                        
+                        glBindTexture(GL_TEXTURE_2D, texture);
+                        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image_width, image_height, 
+                                        GL_RGB, GL_UNSIGNED_BYTE, image.data());
+                        
+                        glClear(GL_COLOR_BUFFER_BIT);
+                        glEnable(GL_TEXTURE_2D);
+                        glBegin(GL_QUADS);
+                        glTexCoord2f(0, 1); glVertex2f(-1, -1);
+                        glTexCoord2f(1, 1); glVertex2f( 1, -1);
+                        glTexCoord2f(1, 0); glVertex2f( 1,  1);
+                        glTexCoord2f(0, 0); glVertex2f(-1,  1);
+                        glEnd();
+                        
+                        glfwSwapBuffers(window);
+                        glfwPollEvents();
+                    }
+                }
             }
             
-            // Save to PNG file
             const char* filename = "output.png";
             stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
             
@@ -236,6 +323,54 @@ class camera {
             color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world);
 
             return color_from_emission + color_from_scatter;
+        }
+
+
+
+        //Spiral function to render pixels in a spiral shape
+        std::vector<int> generate_spiral_order(int width, int height) const {
+            std::vector<std::vector<bool>> visited(height, std::vector<bool>(width, false));
+            std::vector<int> order;
+            order.reserve(width * height);
+            
+            int x = width / 2;
+            int y = height / 2;
+            int dx = 0, dy = -1;  // Start going up
+            
+            int steps = 1;
+            int step_count = 0;
+            int direction_changes = 0;
+            
+            while (order.size() < width * height) {
+                // Add current tile if valid
+                if (x >= 0 && x < width && y >= 0 && y < height && !visited[y][x]) {
+                    visited[y][x] = true;
+                    order.push_back(y * width + x);
+                }
+                
+                // Move to next position
+                x += dx;
+                y += dy;
+                step_count++;
+                
+                // Change direction after completing steps
+                if (step_count == steps) {
+                    step_count = 0;
+                    direction_changes++;
+                    
+                    // Rotate 90 degrees clockwise
+                    int temp = dx;
+                    dx = -dy;
+                    dy = temp;
+                    
+                    // Increase steps every 2 direction changes
+                    if (direction_changes % 2 == 0) {
+                        steps++;
+                    }
+                }
+            }
+            
+            return order;
         }
 };
 

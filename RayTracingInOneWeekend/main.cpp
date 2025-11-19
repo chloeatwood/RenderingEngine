@@ -1422,7 +1422,7 @@ void cornell_bat(){
     w.add(bat1);
     std::cout << "Bat 1 added to world" << std::endl;
 
-    // Second bat - glass, lower position
+    // Second bat - metal, lower position
     std::cout << "Loading bat mesh 2..." << std::endl;
     auto bat2 = load_obj_mesh("meshes/bat.obj", metal_mat, point3(450, 100, 180), 100.0);
     w.add(bat2);
@@ -1432,7 +1432,7 @@ void cornell_bat(){
 
     c.aspect_ratio = 1.0;
     c.image_width = 600;
-    c.samples_per_pixel = 20;
+    c.samples_per_pixel = 100;
     c.max_depth = 50;
     c.background = color(0, 0, 0);
 
