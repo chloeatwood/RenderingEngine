@@ -1514,12 +1514,55 @@ void cornell_box_HDR() {
     }
 }
 
+void testing_cube_maps(){
+    hittable_list world;
+
+
+    cube_maps* env_map = new cube_maps("./EnvironmentMaps/satara_night_no_lamps.exr", 1024);
+
+    // Materials
+    auto mesh_material = make_shared<lambertian>(color(0.128, 0, 0.128));
+    auto ground = make_shared<lambertian>(color(0.5, 0.5, 0.5));
+
+    // Add a ground sphere for reference
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground));
+
+    // Load the mesh - try different scales
+    std::cout << "Loading bat mesh..." << std::endl;
+    auto mesh = load_obj_mesh("meshes/bat.obj", mesh_material, point3(0, 0, 0), 2.5);
+    world.add(mesh);
+    std::cout << "Mesh added to world" << std::endl;
+
+    camera cam;
+
+    cam.aspect_ratio      = 16.0 / 9.0;  
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 50;  
+    cam.max_depth         = 50;
+    cam.background = color(0.70, 0.80, 1.00);
+
+    cam.vfov     = 30;
+    cam.lookfrom = point3(13, 7, 13);  
+    cam.lookat   = point3(0, 0, 0);
+    cam.vup      = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+
+    if (g_use_opengl && g_window) {
+        std::cout << "Calling render_opengl" << std::endl;
+        cam.render_opengl(world, g_window, g_tex, env_map);
+    } else {
+        std::cout << "Calling regular render" << std::endl;
+        cam.render(world, env_map);
+    }
+}
+
 
 
 
 void summon_image(){
     //lessSpheresFast();
-    switch(24) {
+    switch(25) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1544,6 +1587,7 @@ void summon_image(){
         case 22: mesh(); break;
         case 23: cornell_bat(); break;
         case 24: cornell_box_HDR(); break;
+        case 25: testing_cube_maps(); break;
     }
 }
 
