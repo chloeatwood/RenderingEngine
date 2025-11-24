@@ -1,0 +1,5 @@
+#define TINYEXR_IMPLEMENTATION
+#define TINYEXR_USE_MINIZ 1
+#define TINYEXR_USE_THREAD 0
+#define TINYEXR_USE_OPENMP 0
+#include "tinyexr.h"

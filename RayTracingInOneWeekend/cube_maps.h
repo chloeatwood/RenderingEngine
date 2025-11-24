@@ -10,18 +10,8 @@
 #include <cmath>
 #include <iostream>
 
-#define TINYEXR_USE_MINIZ 0
-#define TINYEXR_USE_THREAD 0       
-#define TINYEXR_USE_OPENMP 0
-
 #include "tinyexr.h"
 
-#ifndef TINYEXR_USE_STB_ZLIB
-extern "C" {
-    inline int compress(unsigned char*, unsigned long*, const unsigned char*, unsigned long) { return 0; }
-    inline int uncompress(unsigned char*, unsigned long*, const unsigned char*, unsigned long) { return 0; }
-}
-#endif
 
 class cube_maps {
     public:

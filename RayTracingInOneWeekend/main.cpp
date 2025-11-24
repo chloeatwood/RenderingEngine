@@ -1,3 +1,4 @@
+#include "tinyexr.h"
 
 #include "rtweekend.h"
 
@@ -11,6 +12,8 @@
 #include "triangle.h"
 #include "volume.h"
 #include "mesh_loader.h"
+
+#include "miniz.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
