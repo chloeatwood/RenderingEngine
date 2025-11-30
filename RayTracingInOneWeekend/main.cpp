@@ -1574,10 +1574,232 @@ void cubemap_test() {
     }
 }
 
+void final_showcase() { //No
+    hittable_list world;
+    
+    // Ground with checkered pattern
+    auto checker = make_shared<checker_texture>(0.5, color(0.1, 0.1, 0.1), color(0.9, 0.9, 0.9));
+    world.add(make_shared<sphere>(point3(0, -1001, 0), 1000, make_shared<lambertian>(checker)));
+    
+    // Glass sphere
+    world.add(make_shared<sphere>(point3(-6, 1.5, 0), 1.0, make_shared<dielectric>(1.5)));
+    
+    // Metal sphere with varying fuzz
+    world.add(make_shared<sphere>(point3(-3, 1.5, 0), 1.0, make_shared<metal>(color(0.7, 0.6, 0.5), 0.1)));
+    
+    // Diffuse sphere
+    world.add(make_shared<sphere>(point3(0, 1.5, 0), 1.0, make_shared<lambertian>(color(0.8, 0.2, 0.2))));
+    
+    // Emissive box
+    auto light_mat = make_shared<diffuse_light>(color(10, 10, 10));
+    shared_ptr<hittable> light_box = box(point3(2, 0.5, -2), point3(4, 2.5, 0), light_mat);
+    world.add(light_box);
+    
+    // Volumetric sphere 
+    auto boundary = make_shared<sphere>(point3(3, 1.5, 3), 1.5, make_shared<dielectric>(1.5));
+    world.add(boundary);
+    world.add(make_shared<volume>(boundary, 0.4, color(0.2, 0.8, 1.0)));
+    
+    // Perlin noise texture
+    auto perlin_tex = make_shared<noise_texture>(2.0);
+    world.add(make_shared<sphere>(point3(6, 1.5, 0), 1.0, make_shared<lambertian>(perlin_tex)));
+    
+    // Textured quad
+    auto texture = make_shared<image_texture>("earthmap.jpg");
+    world.add(make_shared<quad>(point3(4, 0, 3), vec3(3, 0, 0), vec3(0, 3, 0), make_shared<lambertian>(texture)));
+    
+    // Triangle
+    world.add(make_shared<triangle>(
+        point3(-6, 0, -3),
+        vec3(0, 2, 0),
+        vec3(2, 0, 0),
+        make_shared<lambertian>(color(1.0, 1.0, 0.2))
+    ));
+    
+    // Quad
+    world.add(make_shared<quad>(
+        point3(-2, 0, -4),
+        vec3(2, 0, 0),
+        vec3(0, 2, 0),
+        make_shared<lambertian>(color(0.2, 1.0, 0.8))
+    ));
+    
+    auto atmosphere = make_shared<sphere>(point3(0, 0, 0), 50, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(atmosphere, 0.001, color(0.9, 0.9, 1.0)));
+    
+    world = hittable_list(make_shared<bvh_node>(world));
+    
+    CubeMap cubemap;
+    bool use_env = cubemap.load_cubemap("./EnvironmentMaps/satara.png");
+    
+    camera cam;
+    
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 400; 
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+    cam.background = color(0.15, 0.15, 0.2);
+    cam.exposure = 1.5;
+    
+    cam.vfov = 50;
+    cam.lookfrom = point3(0, 3, 12);
+    cam.lookat = point3(0, 1.5, 0);
+    cam.vup = vec3(0, 1, 0);
+    
+    cam.defocus_angle = 0.5;
+    cam.focus_dist = 12.0;
+    
+    if (use_env) {
+        cam.use_cubemap = true;
+        cam.cubemap = &cubemap;
+    }
+
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
+
+void crystal_cathedral() {
+    hittable_list world;
+    
+    auto ground = make_shared<lambertian>(color(0.05, 0.05, 0.1));
+    world.add(make_shared<sphere>(point3(0, -1001, 0), 1000, ground));
+
+    auto glass_clear = make_shared<dielectric>(1.5);
+    auto glass_cyan = make_shared<lambertian>(color(0.3, 0.9, 1.0));
+    
+
+    for (int i = 0; i < 4; i++) {
+        double angle = (M_PI / 2.0) * i;
+        double x = 4.0 * cos(angle);
+        double z = 4.0 * sin(angle);
+
+        for (int j = 0; j < 5; j++) {
+            double y = 0.3 + j * 1.2;
+            double radius = 0.6 - (j * 0.08);
+            auto color_gradient = color(0.2 + j * 0.15, 0.5 + j * 0.1, 1.0 - j * 0.1);
+            world.add(make_shared<sphere>(point3(x, y, z), radius, 
+                make_shared<metal>(color_gradient, 0.05)));
+        }
+    }
+    
+ 
+    auto crystal_material = make_shared<dielectric>(1.6);
+    
+
+    for (int i = 0; i < 12; i++) {
+        double angle = (2.0 * M_PI / 12.0) * i;
+        double x = 3.5 * cos(angle);
+        double z = 3.5 * sin(angle);
+        world.add(make_shared<sphere>(point3(x, 3.0, z), 0.35, crystal_material));
+    }
+    
+
+    for (int i = 0; i < 12; i++) {
+        double angle = (2.0 * M_PI / 12.0) * i;
+        double x = 3.0 * cos(angle);
+        double y = 2.0 + 2.0 * sin(angle);
+        world.add(make_shared<sphere>(point3(x, y, 0), 0.3, crystal_material));
+    }
+    
+
+    auto core_light = make_shared<diffuse_light>(color(15, 12, 20));
+    world.add(make_shared<sphere>(point3(0, 2.5, 0), 0.8, core_light));
+    
+
+    auto cyan_mist = make_shared<sphere>(point3(0, 1.5, 0), 6.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cyan_mist, 0.15, color(0.1, 0.6, 0.9)));
+ 
+    auto purple_mist1 = make_shared<sphere>(point3(-3, 3, -3), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_mist1, 0.25, color(0.8, 0.3, 1.0)));
+    
+    auto purple_mist2 = make_shared<sphere>(point3(3, 3, 3), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_mist2, 0.25, color(0.8, 0.3, 1.0)));
+    
+    auto light_warm = make_shared<diffuse_light>(color(18, 14, 8));
+    auto light_cool = make_shared<diffuse_light>(color(8, 14, 20));
+
+    world.add(make_shared<sphere>(point3(-5, 4, -5), 0.4, light_warm));
+    world.add(make_shared<sphere>(point3(-6, 5.5, 0), 0.35, light_warm));
+    world.add(make_shared<sphere>(point3(-5, 3.5, 4), 0.4, light_warm));
+    
+
+    world.add(make_shared<sphere>(point3(5, 4, 5), 0.4, light_cool));
+    world.add(make_shared<sphere>(point3(6, 5.5, 0), 0.35, light_cool));
+    world.add(make_shared<sphere>(point3(5, 3.5, -4), 0.4, light_cool));
+    
+
+    auto purple_metal = make_shared<metal>(color(0.9, 0.4, 1.0), 0.1);
+    auto cyan_metal = make_shared<metal>(color(0.4, 0.9, 1.0), 0.1);
+    
+    shared_ptr<hittable> tet1 = tetrahedron(point3(-2, 5, -2), point3(-1, 6, -1), purple_metal);
+    tet1 = make_shared<rotate_y>(tet1, 45);
+    world.add(tet1);
+    
+    shared_ptr<hittable> tet2 = tetrahedron(point3(2, 5, 2), point3(1, 6, 1), cyan_metal);
+    tet2 = make_shared<rotate_y>(tet2, -45);
+    world.add(tet2);
+    
+
+    auto floor_metal = make_shared<metal>(color(0.5, 0.6, 0.8), 0.15);
+    
+
+    for (int i = -3; i <= 3; i += 2) {
+        for (int j = -3; j <= 3; j += 2) {
+            world.add(make_shared<quad>(
+                point3(i, 0.02, j),
+                vec3(1.5, 0, 0),
+                vec3(0, 0, 1.5),
+                floor_metal
+            ));
+        }
+    }
+    
+    auto atmosphere = make_shared<sphere>(point3(0, 0, 0), 100, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(atmosphere, 0.0008, color(0.8, 0.7, 1.0)));
+    
+    world = hittable_list(make_shared<bvh_node>(world));
+    
+    CubeMap cubemap;
+    bool use_env = cubemap.load_cubemap("./EnvironmentMaps/satara.png");
+    
+    camera cam;
+    
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1500;  
+    cam.samples_per_pixel = 8000;
+    cam.max_depth = 60;
+    cam.background = color(0.02, 0.02, 0.05);
+    cam.exposure = 1.5;
+    
+    cam.vfov = 45;
+    cam.lookfrom = point3(8, 4, 8);
+    cam.lookat = point3(0, 2.5, 0);
+    cam.vup = vec3(0, 1, 0);
+    
+    cam.defocus_angle = 0.3;
+    cam.focus_dist = 11.3;
+    
+    if (use_env) {
+        cam.use_cubemap = true;
+        cam.cubemap = &cubemap;
+    }
+    
+    // Render
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
 
 void summon_image(){
     //lessSpheresFast();
-    switch(25) {
+    switch(27) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1603,6 +1825,8 @@ void summon_image(){
         case 23: cornell_bat(); break;
         case 24: cornell_box_HDR(); break;
         case 25: cubemap_test(); break;
+        case 26: final_showcase(); break;
+        case 27: crystal_cathedral(); break;
     }
 }
 
