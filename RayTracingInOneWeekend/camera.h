@@ -6,6 +6,7 @@
 #include "stb_image_write.h"
 #include "hittable.h"
 #include "material.h"
+#include "cube_maps.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -39,7 +40,7 @@ class camera {
         //Now outputs to a png file so I no longer have to pipe the output tp a ppm file
             //Then use magick to convert it into a png. Can click on the png and watch
             //it render as well
-        void render(const hittable& world){
+        void render(const hittable& world, const cube_maps* env_map = nullptr){
             initialize();
             
             // Test OpenMP
@@ -82,7 +83,7 @@ class camera {
                         color pixel_color(0, 0, 0);
                         for (int sample = 0; sample < samples_per_pixel; sample++) {
                             ray r = get_ray(i, j);
-                            pixel_color += ray_color(r, max_depth, world);
+                            pixel_color += ray_color(r, max_depth, world, env_map);
                         }
                         
                         auto r = pixel_samples_scale * pixel_color.x();
@@ -126,7 +127,7 @@ class camera {
             std::clog << "\rDone. Saved to " << filename << "                    \n";
         }
 
-        void render_opengl(const hittable& world, GLFWwindow* window, GLuint texture){
+        void render_opengl(const hittable& world, GLFWwindow* window, GLuint texture, const cube_maps* env_map = nullptr){
             initialize();
             
             #ifdef _OPENMP
@@ -179,7 +180,7 @@ class camera {
                         color pixel_color(0, 0, 0);
                         for (int sample = 0; sample < samples_per_pixel; sample++) {
                             ray r = get_ray(i, j);
-                            pixel_color += ray_color(r, max_depth, world);
+                            pixel_color += ray_color(r, max_depth, world, env_map);
                         }
                         
                         auto r = pixel_samples_scale * pixel_color.x();
@@ -308,7 +309,7 @@ class camera {
             return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
         }
 
-        color ray_color(const ray& r, int depth, const hittable& world) const {
+        color ray_color(const ray& r, int depth, const hittable& world, const cube_maps* env_map = nullptr) const {
             //If we've exceeded the ray bounce limit, no more light is gathered
             if(depth <= 0){
                 return color(0, 0, 0);
@@ -317,7 +318,11 @@ class camera {
             hit_record rec;
 
             if(!world.hit(r, interval(0.001, infinity), rec)){
-                return background;
+                if(env_map != nullptr && env_map->is_valid()){
+                    return env_map->sample(r.direction());
+                }else{
+                    return background;
+                }
             }
 
             ray scattered;
@@ -328,7 +333,7 @@ class camera {
                 return color_from_emission;
             }
 
-            color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world);
+            color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world, env_map);
 
             return color_from_emission + color_from_scatter;
         }
