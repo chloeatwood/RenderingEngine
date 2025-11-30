@@ -6,7 +6,6 @@
 #include "stb_image_write.h"
 #include "hittable.h"
 #include "material.h"
-#include "cube_maps.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -35,12 +34,13 @@ class camera {
         double defocus_angle = 0;   //Variation angle of rays through each pixel
         double focus_dist = 10;     //Distance from camera lookfrom point to plane of perfect focus
         color background;           //background color
+        double exposure = 1.0;      //HDR exposure control
 
 
         //Now outputs to a png file so I no longer have to pipe the output tp a ppm file
             //Then use magick to convert it into a png. Can click on the png and watch
             //it render as well
-        void render(const hittable& world, const cube_maps* env_map = nullptr){
+        void render(const hittable& world){
             initialize();
             
             // Test OpenMP
@@ -57,6 +57,10 @@ class camera {
             
             const char* filename = "output.png";
             std::vector<unsigned char> image(image_width * image_height * 3);
+
+
+            //Storing HDR values
+            std::vector<color> hdr_image(image_width * image_height);
             
             // Tile size (16x16)
             const int tile_size = 16;
@@ -66,7 +70,7 @@ class camera {
             
             std::atomic<int> tiles_completed(0);
             
-            // Parallelize over tiles
+            // Tiles
             #pragma omp parallel for schedule(dynamic)
             for (int tile_idx = 0; tile_idx < total_tiles; tile_idx++) {
                 int tile_y = tile_idx / num_tiles_x;
@@ -83,21 +87,23 @@ class camera {
                         color pixel_color(0, 0, 0);
                         for (int sample = 0; sample < samples_per_pixel; sample++) {
                             ray r = get_ray(i, j);
-                            pixel_color += ray_color(r, max_depth, world, env_map);
+                            pixel_color += ray_color(r, max_depth, world);
                         }
+
+                        hdr_image[j * image_width + i] = pixel_samples_scale * pixel_color;
                         
-                        auto r = pixel_samples_scale * pixel_color.x();
-                        auto g = pixel_samples_scale * pixel_color.y();
-                        auto b = pixel_samples_scale * pixel_color.z();
+                        // auto r = pixel_samples_scale * pixel_color.x();
+                        // auto g = pixel_samples_scale * pixel_color.y();
+                        // auto b = pixel_samples_scale * pixel_color.z();
                         
-                        r = std::sqrt(r);
-                        g = std::sqrt(g);
-                        b = std::sqrt(b);
+                        // r = std::sqrt(r);
+                        // g = std::sqrt(g);
+                        // b = std::sqrt(b);
                         
-                        int index = (j * image_width + i) * 3;
-                        image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
-                        image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
-                        image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
+                        // int index = (j * image_width + i) * 3;
+                        // image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                        // image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                        // image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                     }
                 }
                 
@@ -113,21 +119,16 @@ class camera {
                     }
                 }
                 
-                // Write periodically
-                if (tiles_completed % 50 == 0) {
-                    #pragma omp critical
-                    {
-                        stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
-                    }
-                }
             }
             
             // Final write
+
+            tone_map_to_image(hdr_image, image);
             stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
             std::clog << "\rDone. Saved to " << filename << "                    \n";
         }
 
-        void render_opengl(const hittable& world, GLFWwindow* window, GLuint texture, const cube_maps* env_map = nullptr){
+        void render_opengl(const hittable& world, GLFWwindow* window, GLuint texture){
             initialize();
             
             #ifdef _OPENMP
@@ -146,6 +147,8 @@ class camera {
             glViewport(0, 0, image_width, image_height);
             
             std::vector<unsigned char> image(image_width * image_height * 3, 0);
+
+            std::vector<color> hdr_image(image_width * image_height);
             
             glBindTexture(GL_TEXTURE_2D, texture);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_width, image_height, 
@@ -180,21 +183,23 @@ class camera {
                         color pixel_color(0, 0, 0);
                         for (int sample = 0; sample < samples_per_pixel; sample++) {
                             ray r = get_ray(i, j);
-                            pixel_color += ray_color(r, max_depth, world, env_map);
+                            pixel_color += ray_color(r, max_depth, world);
                         }
+
+                        hdr_image[j * image_width + i] = pixel_samples_scale *pixel_color;
                         
-                        auto r = pixel_samples_scale * pixel_color.x();
-                        auto g = pixel_samples_scale * pixel_color.y();
-                        auto b = pixel_samples_scale * pixel_color.z();
+                        // auto r = pixel_samples_scale * pixel_color.x();
+                        // auto g = pixel_samples_scale * pixel_color.y();
+                        // auto b = pixel_samples_scale * pixel_color.z();
                         
-                        r = std::sqrt(r);
-                        g = std::sqrt(g);
-                        b = std::sqrt(b);
+                        // r = std::sqrt(r);
+                        // g = std::sqrt(g);
+                        // b = std::sqrt(b);
                         
-                        int index = (j * image_width + i) * 3;
-                        image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
-                        image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
-                        image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
+                        // int index = (j * image_width + i) * 3;
+                        // image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                        // image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                        // image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                     }
                 }
                 
@@ -207,6 +212,8 @@ class camera {
                         std::clog << "\rProgress: " << (100 * tiles_completed / total_tiles) 
                                 << "% (" << tiles_completed << "/" << total_tiles << " tiles)" 
                                 << std::flush;
+
+                        tone_map_to_image(hdr_image, image);
                         
                         glBindTexture(GL_TEXTURE_2D, texture);
                         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image_width, image_height, 
@@ -227,6 +234,7 @@ class camera {
                 }
             }
             
+            tone_map_to_image(hdr_image, image);
             const char* filename = "output.png";
             stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
             
@@ -309,7 +317,7 @@ class camera {
             return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
         }
 
-        color ray_color(const ray& r, int depth, const hittable& world, const cube_maps* env_map = nullptr) const {
+        color ray_color(const ray& r, int depth, const hittable& world) const {
             //If we've exceeded the ray bounce limit, no more light is gathered
             if(depth <= 0){
                 return color(0, 0, 0);
@@ -318,11 +326,7 @@ class camera {
             hit_record rec;
 
             if(!world.hit(r, interval(0.001, infinity), rec)){
-                if(env_map != nullptr && env_map->is_valid()){
-                    return env_map->sample(r.direction());
-                }else{
-                    return background;
-                }
+                return background;
             }
 
             ray scattered;
@@ -333,7 +337,7 @@ class camera {
                 return color_from_emission;
             }
 
-            color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world, env_map);
+            color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world);
 
             return color_from_emission + color_from_scatter;
         }
@@ -384,6 +388,42 @@ class camera {
             }
             
             return order;
+        }
+
+        color tone_map_aces(const color& hdr) const {
+            const double a = 2.51;
+            const double b = 0.03;
+            const double c = 2.43;
+            const double d = 0.59;
+            const double e = 0.14;
+
+            auto tonemap = [&](double x) {
+                return std::clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+            };
+
+            return color(
+                tonemap(hdr.x()),
+                tonemap(hdr.y()),
+                tonemap(hdr.z())
+            );  
+        }
+
+        void tone_map_to_image(const std::vector<color>& hdr_image, std::vector<unsigned char>& ldr_image) const {
+            for(int j = 0; j < image_height; j++){
+                for(int i = 0; i < image_width; i++){
+                    int index = j * image_width + i;
+                    color hdr = hdr_image[index] * exposure;
+
+                    color mapped = tone_map_aces(hdr);
+
+                    mapped = color(std::pow(mapped.x(), 1.0/2.2), std::pow(mapped.y(), 1.0/2.2), std::pow(mapped.z(), 1.0/2.2));
+
+                    int img_idx = index * 3;
+                    ldr_image[img_idx + 0] = static_cast<unsigned char>(256 * std::clamp(mapped.x(), 0.0, 0.999));
+                    ldr_image[img_idx + 1] = static_cast<unsigned char>(256 * std::clamp(mapped.y(), 0.0, 0.999));
+                    ldr_image[img_idx + 2] = static_cast<unsigned char>(256 * std::clamp(mapped.z(), 0.0, 0.999));
+                }
+            }
         }
 };
 

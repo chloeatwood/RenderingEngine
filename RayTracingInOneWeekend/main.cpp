@@ -1,3 +1,4 @@
+
 #include "rtweekend.h"
 
 #include "bvh.h"
@@ -10,8 +11,6 @@
 #include "triangle.h"
 #include "volume.h"
 #include "mesh_loader.h"
-
-#include "miniz.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -590,7 +589,7 @@ void cornell_box(){
 
     c.aspect_ratio = 1.0;
     c.image_width = 600;
-    c.samples_per_pixel = 200;
+    c.samples_per_pixel = 400;
     c.max_depth = 50;
     c.background = color(0, 0, 0);
 
@@ -1394,7 +1393,6 @@ void mesh(){
     }
 }
 
-//TODO: Run at home with 1500 samples_per_pixel on PC to get good cornell_bat()
 void cornell_bat(){
     hittable_list w;
 
@@ -1463,10 +1461,65 @@ void cornell_bat(){
 }
 
 
+void cornell_box_HDR() {
+    hittable_list w;
+
+    auto red   = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    
+    auto light = make_shared<diffuse_light>(color(900, 800, 700));
+
+    auto glass = make_shared<dielectric>(1.5);
+    auto metal_mat = make_shared<metal>(color(0.95, 0.95, 0.98), 0.01);
+
+    w.add(make_shared<quad>(point3(555,0,0),     vec3(0,555,0), vec3(0,0,555), green));
+    w.add(make_shared<quad>(point3(0,0,0),       vec3(0,555,0), vec3(0,0,555), red));
+    w.add(make_shared<quad>(point3(0,0,0),       vec3(555,0,0), vec3(0,0,555), white));
+    w.add(make_shared<quad>(point3(555,555,555), vec3(-555,0,0), vec3(0,0,-555), white));
+    w.add(make_shared<quad>(point3(0,0,555),     vec3(555,0,0), vec3(0,555,0), white));
+
+    w.add(make_shared<quad>(point3(213,554,227), vec3(130,0,0), vec3(0,0,105), light));
+
+    shared_ptr<hittable> box1 = box(point3(0,0,0), point3(165,330,165), glass);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265,0,295));
+    w.add(box1);
+
+    shared_ptr<hittable> box2 = box(point3(0,0,0), point3(165,165,165), metal_mat);
+    box2 = make_shared<rotate_y>(box2, -18);
+    box2 = make_shared<translate>(box2, vec3(130,0,65));
+    w.add(box2);
+
+    w.add(make_shared<sphere>(point3(400, 150, 200), 80, glass));
+
+    camera cam;
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = 900;
+    cam.samples_per_pixel = 2500;
+    cam.max_depth         = 50;
+    cam.background        = color(0,0,0);
+
+    cam.vfov     = 40;
+    cam.lookfrom = point3(278, 278, -800);
+    cam.lookat   = point3(278, 278, 0);
+    cam.vup      = vec3(0,1,0);
+
+    cam.exposure = 0.025;
+
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(w, g_window, g_tex);
+    } else {
+        cam.render(w);
+    }
+}
+
+
+
 
 void summon_image(){
     //lessSpheresFast();
-    switch(23) {
+    switch(24) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1490,6 +1543,7 @@ void summon_image(){
         case 21: meshBasic(); break;
         case 22: mesh(); break;
         case 23: cornell_bat(); break;
+        case 24: cornell_box_HDR(); break;
     }
 }
 
