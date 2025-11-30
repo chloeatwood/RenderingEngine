@@ -34,7 +34,6 @@ class camera {
         double defocus_angle = 0;   //Variation angle of rays through each pixel
         double focus_dist = 10;     //Distance from camera lookfrom point to plane of perfect focus
         color background;           //background color
-        double exposure = 1.0;      //HDR exposure control
 
 
         //Now outputs to a png file so I no longer have to pipe the output tp a ppm file
@@ -57,10 +56,6 @@ class camera {
             
             const char* filename = "output.png";
             std::vector<unsigned char> image(image_width * image_height * 3);
-
-
-            //Storing HDR values
-            std::vector<color> hdr_image(image_width * image_height);
             
             // Tile size (16x16)
             const int tile_size = 16;
@@ -70,7 +65,7 @@ class camera {
             
             std::atomic<int> tiles_completed(0);
             
-            // Tiles
+            // Parallelize over tiles
             #pragma omp parallel for schedule(dynamic)
             for (int tile_idx = 0; tile_idx < total_tiles; tile_idx++) {
                 int tile_y = tile_idx / num_tiles_x;
@@ -89,21 +84,19 @@ class camera {
                             ray r = get_ray(i, j);
                             pixel_color += ray_color(r, max_depth, world);
                         }
-
-                        hdr_image[j * image_width + i] = pixel_samples_scale * pixel_color;
                         
-                        // auto r = pixel_samples_scale * pixel_color.x();
-                        // auto g = pixel_samples_scale * pixel_color.y();
-                        // auto b = pixel_samples_scale * pixel_color.z();
+                        auto r = pixel_samples_scale * pixel_color.x();
+                        auto g = pixel_samples_scale * pixel_color.y();
+                        auto b = pixel_samples_scale * pixel_color.z();
                         
-                        // r = std::sqrt(r);
-                        // g = std::sqrt(g);
-                        // b = std::sqrt(b);
+                        r = std::sqrt(r);
+                        g = std::sqrt(g);
+                        b = std::sqrt(b);
                         
-                        // int index = (j * image_width + i) * 3;
-                        // image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
-                        // image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
-                        // image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
+                        int index = (j * image_width + i) * 3;
+                        image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                        image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                        image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                     }
                 }
                 
@@ -119,11 +112,16 @@ class camera {
                     }
                 }
                 
+                // Write periodically
+                if (tiles_completed % 50 == 0) {
+                    #pragma omp critical
+                    {
+                        stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
+                    }
+                }
             }
             
             // Final write
-
-            tone_map_to_image(hdr_image, image);
             stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
             std::clog << "\rDone. Saved to " << filename << "                    \n";
         }
@@ -147,8 +145,6 @@ class camera {
             glViewport(0, 0, image_width, image_height);
             
             std::vector<unsigned char> image(image_width * image_height * 3, 0);
-
-            std::vector<color> hdr_image(image_width * image_height);
             
             glBindTexture(GL_TEXTURE_2D, texture);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_width, image_height, 
@@ -185,21 +181,19 @@ class camera {
                             ray r = get_ray(i, j);
                             pixel_color += ray_color(r, max_depth, world);
                         }
-
-                        hdr_image[j * image_width + i] = pixel_samples_scale *pixel_color;
                         
-                        // auto r = pixel_samples_scale * pixel_color.x();
-                        // auto g = pixel_samples_scale * pixel_color.y();
-                        // auto b = pixel_samples_scale * pixel_color.z();
+                        auto r = pixel_samples_scale * pixel_color.x();
+                        auto g = pixel_samples_scale * pixel_color.y();
+                        auto b = pixel_samples_scale * pixel_color.z();
                         
-                        // r = std::sqrt(r);
-                        // g = std::sqrt(g);
-                        // b = std::sqrt(b);
+                        r = std::sqrt(r);
+                        g = std::sqrt(g);
+                        b = std::sqrt(b);
                         
-                        // int index = (j * image_width + i) * 3;
-                        // image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
-                        // image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
-                        // image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
+                        int index = (j * image_width + i) * 3;
+                        image[index + 0] = static_cast<unsigned char>(256 * std::clamp(r, 0.0, 0.999));
+                        image[index + 1] = static_cast<unsigned char>(256 * std::clamp(g, 0.0, 0.999));
+                        image[index + 2] = static_cast<unsigned char>(256 * std::clamp(b, 0.0, 0.999));
                     }
                 }
                 
@@ -212,8 +206,6 @@ class camera {
                         std::clog << "\rProgress: " << (100 * tiles_completed / total_tiles) 
                                 << "% (" << tiles_completed << "/" << total_tiles << " tiles)" 
                                 << std::flush;
-
-                        tone_map_to_image(hdr_image, image);
                         
                         glBindTexture(GL_TEXTURE_2D, texture);
                         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image_width, image_height, 
@@ -234,7 +226,6 @@ class camera {
                 }
             }
             
-            tone_map_to_image(hdr_image, image);
             const char* filename = "output.png";
             stbi_write_png(filename, image_width, image_height, 3, image.data(), image_width * 3);
             
@@ -388,42 +379,6 @@ class camera {
             }
             
             return order;
-        }
-
-        color tone_map_aces(const color& hdr) const {
-            const double a = 2.51;
-            const double b = 0.03;
-            const double c = 2.43;
-            const double d = 0.59;
-            const double e = 0.14;
-
-            auto tonemap = [&](double x) {
-                return std::clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
-            };
-
-            return color(
-                tonemap(hdr.x()),
-                tonemap(hdr.y()),
-                tonemap(hdr.z())
-            );  
-        }
-
-        void tone_map_to_image(const std::vector<color>& hdr_image, std::vector<unsigned char>& ldr_image) const {
-            for(int j = 0; j < image_height; j++){
-                for(int i = 0; i < image_width; i++){
-                    int index = j * image_width + i;
-                    color hdr = hdr_image[index] * exposure;
-
-                    color mapped = tone_map_aces(hdr);
-
-                    mapped = color(std::pow(mapped.x(), 1.0/2.2), std::pow(mapped.y(), 1.0/2.2), std::pow(mapped.z(), 1.0/2.2));
-
-                    int img_idx = index * 3;
-                    ldr_image[img_idx + 0] = static_cast<unsigned char>(256 * std::clamp(mapped.x(), 0.0, 0.999));
-                    ldr_image[img_idx + 1] = static_cast<unsigned char>(256 * std::clamp(mapped.y(), 0.0, 0.999));
-                    ldr_image[img_idx + 2] = static_cast<unsigned char>(256 * std::clamp(mapped.z(), 0.0, 0.999));
-                }
-            }
         }
 };
 

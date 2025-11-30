@@ -22,7 +22,7 @@
 
 ## Must choose at least 25 for a C-,  + 75 for guaranteed A + Importance Sampling (would be over-exaguration):
 
-    [X] High dynamic range images: 10 
+    [ ] High dynamic range images: 10 
 
     [X] Volume rendering (smoke, clouds, etc.): 10 -> Book 2
 
@@ -70,7 +70,7 @@
     [X] Triangle Mesh loading
     [X] Normal Interpolation
     [X] Parallelization
-    [X] HDR
+    [ ] HDR
     [ ] Cube/Environment Maps
 
 ## During Thanksgiving Break
