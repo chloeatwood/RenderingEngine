@@ -13,6 +13,7 @@
 #include <atomic>
 #include <algorithm>
 #include <cmath>
+#include "cube_map.h"
 
 
 #ifdef _OPENMP
@@ -35,6 +36,8 @@ class camera {
         double focus_dist = 10;     //Distance from camera lookfrom point to plane of perfect focus
         color background;           //background color
         double exposure = 1.0;      //HDR exposure control
+        CubeMap* cubemap = nullptr;
+        bool use_cubemap = false;
 
 
         //Now outputs to a png file so I no longer have to pipe the output tp a ppm file
@@ -318,7 +321,6 @@ class camera {
         }
 
         color ray_color(const ray& r, int depth, const hittable& world) const {
-            //If we've exceeded the ray bounce limit, no more light is gathered
             if(depth <= 0){
                 return color(0, 0, 0);
             }
@@ -326,6 +328,10 @@ class camera {
             hit_record rec;
 
             if(!world.hit(r, interval(0.001, infinity), rec)){
+                // Use cubemap for background if available
+                if (use_cubemap && cubemap) {
+                    return cubemap->sample_direction(r.direction());
+                }
                 return background;
             }
 

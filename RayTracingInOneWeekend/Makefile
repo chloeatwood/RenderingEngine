@@ -10,7 +10,7 @@ C_SOURCES = glad/glad.c
 TARGET = inOneWeekend.exe
 
 # Libraries
-LIBS = -lglfw3 -lopengl32 -lgdi32
+LIBS = -lglfw3 -lopengl32 -lgdi32 -lz
 
 # Default rule
 all: $(TARGET)

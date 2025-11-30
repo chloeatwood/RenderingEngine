@@ -1,4 +1,5 @@
 
+
 #include "rtweekend.h"
 
 #include "bvh.h"
@@ -1514,12 +1515,69 @@ void cornell_box_HDR() {
     }
 }
 
+void cubemap_test() {
+    hittable_list world;
+    
 
+    auto ground = make_shared<lambertian>(color(0.5, 0.5, 0.5));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground));
+    
+    auto glass = make_shared<dielectric>(1.5);
+    world.add(make_shared<sphere>(point3(-2, 1, 0), 1.0, glass));
+    
+    auto metal_mat = make_shared<metal>(color(0.9, 0.9, 0.95), 0.1);
+    world.add(make_shared<sphere>(point3(2, 1, 0), 1.0, metal_mat));
+    
+    auto diff = make_shared<lambertian>(color(0.8, 0.2, 0.2));
+    world.add(make_shared<sphere>(point3(0, 1, 2), 1.0, diff));
+    
+    world = hittable_list(make_shared<bvh_node>(world));
+    
+    CubeMap cubemap;
+    bool cubemap_loaded = false;
+    
+    if (cubemap.load_cubemap("./EnvironmentMaps/satara.png")) {
+        std::cout << "Environment map loaded successfully!" << std::endl;
+        cubemap_loaded = true;
+    } else {
+        std::cout << "Failed to load environment map, using fallback background" << std::endl;
+    }
+    
+    camera cam;
+    
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 800;
+    cam.samples_per_pixel = 1000;
+    cam.max_depth = 50;
+    cam.background = color(0.7, 0.8, 1.0);
+    cam.exposure = 3.0;  
+    
+    cam.vfov = 40;
+    cam.lookfrom = point3(0, 1.5, 8);
+    cam.lookat = point3(0, 1, 0);
+    cam.vup = vec3(0, 1, 0);
+    
+    cam.defocus_angle = 0.2;
+    cam.focus_dist = 8.0;
+    
+    if (cubemap_loaded) {
+        cam.use_cubemap = true;
+        cam.cubemap = &cubemap;
+    }
+    
+    if (g_use_opengl && g_window) {
+        std::cout << "Rendering cubemap test with OpenGL" << std::endl;
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        std::cout << "Rendering cubemap test to PNG" << std::endl;
+        cam.render(world);
+    }
+}
 
 
 void summon_image(){
     //lessSpheresFast();
-    switch(24) {
+    switch(25) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1544,6 +1602,7 @@ void summon_image(){
         case 22: mesh(); break;
         case 23: cornell_bat(); break;
         case 24: cornell_box_HDR(); break;
+        case 25: cubemap_test(); break;
     }
 }
 
