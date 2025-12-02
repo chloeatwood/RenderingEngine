@@ -310,15 +310,15 @@ void quadsBasic(){
     auto lower_teal   = make_shared<lambertian>(color(0.2, 0.8, 0.8));
 
 
-    auto purpleTexture = make_shared<image_texture>("purpleTexture.jpg");
+    auto purpleTexture = make_shared<image_texture>("purple.jpg");
     auto purpleText = make_shared<lambertian>(purpleTexture);
 
     // Quads
     world.add(make_shared<quad>(point3(-3,-2, 5), vec3(0, 0,-4), vec3(0, 4, 0), purpleText));
-    world.add(make_shared<quad>(point3(-2,-2, 0), vec3(4, 0, 0), vec3(0, 4, 0), back_green));
-    world.add(make_shared<quad>(point3( 3,-2, 1), vec3(0, 0, 4), vec3(0, 4, 0), right_blue));
-    world.add(make_shared<quad>(point3(-2, 3, 1), vec3(4, 0, 0), vec3(0, 0, 4), upper_orange));
-    world.add(make_shared<quad>(point3(-2,-3, 5), vec3(4, 0, 0), vec3(0, 0,-4), lower_teal));
+    world.add(make_shared<quad>(point3(-2,-2, 0), vec3(4, 0, 0), vec3(0, 4, 0), purpleText));
+    world.add(make_shared<quad>(point3( 3,-2, 1), vec3(0, 0, 4), vec3(0, 4, 0), purpleText));
+    world.add(make_shared<quad>(point3(-2, 3, 1), vec3(4, 0, 0), vec3(0, 0, 4), purpleText));
+    world.add(make_shared<quad>(point3(-2,-3, 5), vec3(4, 0, 0), vec3(0, 0,-4), purpleText));
 
     camera cam;
 
@@ -1546,7 +1546,7 @@ void cubemap_test() {
     CubeMap cubemap;
     bool cubemap_loaded = false;
     
-    if (cubemap.load_cubemap("./EnvironmentMaps/satara.png")) {
+    if (cubemap.load_cubemap("./EnvironmentMaps/lake.png")) {
         std::cout << "Environment map loaded successfully!" << std::endl;
         cubemap_loaded = true;
     } else {
@@ -1560,7 +1560,7 @@ void cubemap_test() {
     cam.samples_per_pixel = 1000;
     cam.max_depth = 50;
     cam.background = color(0.7, 0.8, 1.0);
-    cam.exposure = 3.0;  
+    cam.exposure = 4.0;  
     
     cam.vfov = 40;
     cam.lookfrom = point3(0, 1.5, 8);
@@ -1749,6 +1749,27 @@ void cool() { //Has lots of potential but needs some work
     world.add(tet2);
     
 
+    // mesh
+    auto mesh_material = make_shared<metal>(color(0.8, 0.8, 0.9), 0.05);
+    auto mesh = load_obj_mesh("meshes/bat.obj", mesh_material, point3(0, 1.5, 0), 1.5);
+    world.add(mesh);
+    
+    // image texture
+    auto JPG = make_shared<image_texture>("purple.jpg");
+    auto purpleJPG = make_shared<lambertian>(JPG);
+    world.add(make_shared<sphere>(point3(-6, 1, -2), 0.8, purpleJPG));
+    
+    // Perlin noise 
+    auto perlin_tex = make_shared<noise_texture>(4.0);
+    world.add(make_shared<sphere>(point3(6, 1, 2), 0.8, make_shared<lambertian>(perlin_tex)));
+    
+    // motion blur
+    auto moving_material = make_shared<lambertian>(color(0.9, 0.3, 0.5));
+    auto center1 = point3(0, 0.5, -5);
+    auto center2 = center1 + vec3(0, 0.5, 0);
+    world.add(make_shared<sphere>(center1, center2, 0.5, moving_material));
+    
+
     auto floor_metal = make_shared<metal>(color(0.5, 0.6, 0.8), 0.15);
     
 
@@ -1820,7 +1841,7 @@ void summon_image(){
         case 11: simple_light(); break;
         case 12: cornell_box(); break;
         case 13: cornell_smoke(); break;
-        case 14: final_scene(400, 250, 4); break;
+        case 14: final_scene(400, 3000, 4); break;
         case 15: volume_showcase(); break;
         case 16: purple(); break;
         case 17: dark(); break;
