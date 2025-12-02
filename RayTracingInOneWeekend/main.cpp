@@ -1775,12 +1775,12 @@ void cool() { //Has lots of potential but needs some work
     
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1500;  
-    cam.samples_per_pixel = 8000;
+    cam.samples_per_pixel = 100; //On PC at home try 10000 (10 thousand)
     cam.max_depth = 60;
     cam.background = color(0.02, 0.02, 0.05);
     cam.exposure = 1.5;
     
-    cam.vfov = 45;
+    cam.vfov = 40;
     cam.lookfrom = point3(8, 4, 8);
     cam.lookat = point3(0, 2.5, 0);
     cam.vup = vec3(0, 1, 0);
