@@ -1667,7 +1667,7 @@ void final_showcase() { //No
 /*
 * More messing around trying to find final rendering image to submit. 
 */
-void cool() { //Has lots of potential but needs some work
+void cool() {
     hittable_list world;
     
     auto ground = make_shared<lambertian>(color(0.05, 0.05, 0.1));
@@ -1838,12 +1838,353 @@ void cool() { //Has lots of potential but needs some work
     }
 }
 
+//Cannot see bat mesh. Need to move it or maybe need to render with more samples to see it
+void cornell_box_HDR_enhanced() {
+    hittable_list w;
+
+    auto red   = make_shared<lambertian>(color(0.65, 0.05, 0.05));
+    auto green = make_shared<lambertian>(color(0.12, 0.45, 0.15));
+    auto white = make_shared<lambertian>(color(0.73, 0.73, 0.73));
+    
+    auto light = make_shared<diffuse_light>(color(900, 800, 700));
+
+    auto glass = make_shared<dielectric>(1.5);
+    auto metal_mat = make_shared<metal>(color(0.95, 0.95, 0.98), 0.01);
+
+    // Cornell box walls
+    w.add(make_shared<quad>(point3(555,0,0),     vec3(0,555,0), vec3(0,0,555), green));
+    w.add(make_shared<quad>(point3(0,0,0),       vec3(0,555,0), vec3(0,0,555), red));
+    w.add(make_shared<quad>(point3(0,0,0),       vec3(555,0,0), vec3(0,0,555), white));
+    w.add(make_shared<quad>(point3(555,555,555), vec3(-555,0,0), vec3(0,0,-555), white));
+    w.add(make_shared<quad>(point3(0,0,555),     vec3(555,0,0), vec3(0,555,0), white));
+
+    // Main ceiling light
+    w.add(make_shared<quad>(point3(213,554,227), vec3(130,0,0), vec3(0,0,105), light));
+
+    // Glass box
+    shared_ptr<hittable> box1 = box(point3(0,0,0), point3(165,330,165), glass);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265,0,295));
+    w.add(box1);
+
+    // Metal box
+    shared_ptr<hittable> box2 = box(point3(0,0,0), point3(165,165,165), metal_mat);
+    box2 = make_shared<rotate_y>(box2, -18);
+    box2 = make_shared<translate>(box2, vec3(130,0,65));
+    w.add(box2);
+
+    // Glass sphere
+    w.add(make_shared<sphere>(point3(400, 150, 200), 80, glass));
+
+    // mesh
+    auto bat_material = make_shared<lambertian>(color(0.8, 0.7, 1.0));
+    auto bat_mesh = load_obj_mesh("meshes/bat.obj", bat_material, point3(278, 80, 450), 60.0);
+    w.add(bat_mesh);
+
+    // image texture
+    auto earth_texture = make_shared<image_texture>("earthmap.jpg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    w.add(make_shared<sphere>(point3(450, 80, 100), 70, earth_surface));
+
+    // perlin noise
+    auto perlin_tex = make_shared<noise_texture>(0.5);
+    auto perlin_mat = make_shared<lambertian>(perlin_tex);
+    w.add(make_shared<sphere>(point3(100, 80, 150), 70, perlin_mat));
+
+    // motion blur
+    auto moving_material1 = make_shared<lambertian>(color(0.9, 0.3, 0.5));
+    auto mb_center1 = point3(200, 100, 350);
+    auto mb_center2 = mb_center1 + vec3(80, 0, 0);
+    w.add(make_shared<sphere>(mb_center1, mb_center2, 50, moving_material1));
+
+    auto moving_material2 = make_shared<lambertian>(color(0.3, 0.9, 0.7));
+    auto mb_center3 = point3(350, 100, 150);
+    auto mb_center4 = mb_center3 + vec3(0, 60, 0);
+    w.add(make_shared<sphere>(mb_center3, mb_center4, 45, moving_material2));
+
+    // volume
+    auto fog_boundary = make_shared<sphere>(point3(278, 200, 400), 150, make_shared<dielectric>(1.5));
+    w.add(make_shared<volume>(fog_boundary, 0.01, color(0.8, 0.8, 0.9)));
+
+    camera cam;
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = 900;
+    cam.samples_per_pixel = 100;
+    cam.max_depth         = 50;
+    cam.background        = color(0,0,0);
+
+    cam.vfov     = 40;
+    cam.lookfrom = point3(278, 278, -800);
+    cam.lookat   = point3(278, 278, 0);
+    cam.vup      = vec3(0,1,0);
+
+    cam.exposure = 0.025;
+
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(w, g_window, g_tex);
+    } else {
+        cam.render(w);
+    }
+}
+
+void ultimate_showcase() {
+    hittable_list world;
+
+    // ground
+    auto checker = make_shared<checker_texture>(0.8, color(0.1, 0.1, 0.15), color(0.8, 0.8, 0.85));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(checker)));
+
+    // mesh
+    auto bat_material = make_shared<lambertian>(color(0.9, 0.7, 1.0));
+    auto bat_mesh = load_obj_mesh("meshes/bat.obj", bat_material, point3(0, 2, 0), 1.8);
+    world.add(bat_mesh);
+
+    // stand for bat? hopefully positioned right
+    auto pedestal_mat = make_shared<metal>(color(0.6, 0.6, 0.7), 0.1);
+    shared_ptr<hittable> pedestal = box(point3(-1, 0, -1), point3(1, 1.5, 1), pedestal_mat);
+    world.add(pedestal);
+
+    // materials showcase
+    world.add(make_shared<sphere>(point3(-6, 1.5, -6), 1.2, make_shared<lambertian>(color(0.8, 0.2, 0.2))));
+    world.add(make_shared<sphere>(point3(6, 1.5, -6), 1.2, make_shared<metal>(color(0.9, 0.9, 0.95), 0.05)));
+    world.add(make_shared<sphere>(point3(-6, 1.5, 6), 1.2, make_shared<dielectric>(1.5)));
+    auto emissive_mat = make_shared<diffuse_light>(color(8, 6, 10));
+    world.add(make_shared<sphere>(point3(6, 1.5, 6), 1.2, emissive_mat));
+
+    // image texture
+    auto earth_texture = make_shared<image_texture>("earthmap.jpg");
+    world.add(make_shared<sphere>(point3(-4, 0.8, 0), 0.8, make_shared<lambertian>(earth_texture)));
+    auto purple_texture = make_shared<image_texture>("purple.jpg");
+    world.add(make_shared<sphere>(point3(4, 0.8, 0), 0.8, make_shared<lambertian>(purple_texture)));
+
+    //Perlin noise
+    auto perlin_tex = make_shared<noise_texture>(2.0);
+    world.add(make_shared<sphere>(point3(-4, 0.8, 3), 0.8, make_shared<lambertian>(perlin_tex)));
+    world.add(make_shared<sphere>(point3(4, 0.8, -3), 0.8, make_shared<lambertian>(perlin_tex)));
+
+    // motion blur
+    auto mb_mat1 = make_shared<lambertian>(color(1.0, 0.3, 0.5));
+    auto mb_center1_1 = point3(-3, 3, -3);
+    auto mb_center1_2 = mb_center1_1 + vec3(1.5, 0, 0);
+    world.add(make_shared<sphere>(mb_center1_1, mb_center1_2, 0.6, mb_mat1));
+
+    auto mb_mat2 = make_shared<lambertian>(color(0.3, 1.0, 0.5));
+    auto mb_center2_1 = point3(3, 3, 3);
+    auto mb_center2_2 = mb_center2_1 + vec3(0, 0, -1.5);
+    world.add(make_shared<sphere>(mb_center2_1, mb_center2_2, 0.6, mb_mat2));
+
+    // triangles
+    auto tet_mat1 = make_shared<metal>(color(0.4, 0.9, 1.0), 0.1);
+    shared_ptr<hittable> tet1 = tetrahedron(point3(-2, 5, -2), point3(-1, 6.5, -1), tet_mat1);
+    tet1 = make_shared<rotate_y>(tet1, 45);
+    world.add(tet1);
+    auto tet_mat2 = make_shared<metal>(color(1.0, 0.4, 0.9), 0.1);
+    shared_ptr<hittable> tet2 = tetrahedron(point3(2, 5, 2), point3(1, 6.5, 1), tet_mat2);
+    tet2 = make_shared<rotate_y>(tet2, -45);
+    world.add(tet2);
+
+    // quads
+    auto tile_mat = make_shared<metal>(color(0.5, 0.6, 0.8), 0.2);
+    for (int i = -2; i <= 2; i += 2) {
+        for (int j = -2; j <= 2; j += 2) {
+            if (abs(i) == 2 || abs(j) == 2) { // Only outer ring
+                world.add(make_shared<quad>(
+                    point3(i * 2, 0.01, j * 2),
+                    vec3(1.5, 0, 0),
+                    vec3(0, 0, 1.5),
+                    tile_mat
+                ));
+            }
+        }
+    }
+
+    // volumes
+    auto cyan_mist_boundary = make_shared<sphere>(point3(-5, 3, 0), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(cyan_mist_boundary, 0.3, color(0.2, 0.8, 1.0)));
+    auto purple_mist_boundary = make_shared<sphere>(point3(5, 3, 0), 2.5, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_mist_boundary, 0.3, color(0.9, 0.3, 1.0)));
+    auto atmosphere = make_shared<sphere>(point3(0, 0, 0), 100, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(atmosphere, 0.001, color(0.7, 0.7, 0.9)));
+
+    // lighting
+    auto main_light = make_shared<diffuse_light>(color(20, 18, 25));
+    world.add(make_shared<sphere>(point3(0, 8, 0), 1.5, main_light));
+    auto accent_light1 = make_shared<diffuse_light>(color(15, 10, 5));
+    world.add(make_shared<sphere>(point3(-8, 6, -8), 0.8, accent_light1));
+    auto accent_light2 = make_shared<diffuse_light>(color(5, 10, 15));
+    world.add(make_shared<sphere>(point3(8, 6, 8), 0.8, accent_light2));
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    // cube map
+    CubeMap cubemap;
+    bool use_env = cubemap.load_cubemap("./EnvironmentMaps/satara.png");
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+    cam.background = color(0.05, 0.05, 0.1);
+    cam.exposure = 1.8;
+
+    cam.vfov = 45;
+    cam.lookfrom = point3(0, 5, 15);
+    cam.lookat = point3(0, 2, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.4;
+    cam.focus_dist = 15.0;
+
+    if (use_env) {
+        cam.use_cubemap = true;
+        cam.cubemap = &cubemap;
+    }
+
+    // Render
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
+
+void dark_moody_night() {
+    hittable_list world;
+
+    // ground
+    auto dark_ground = make_shared<lambertian>(color(0.15, 0.15, 0.2));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, dark_ground));
+
+    // BAT
+    auto bat_material = make_shared<lambertian>(color(0.7, 0.6, 0.8));
+    auto bat_mesh = load_obj_mesh("meshes/bat.obj", bat_material, point3(0, 1.5, 0), 2.0);
+    world.add(bat_mesh);
+
+    // HDR lighting
+    auto underlight = make_shared<diffuse_light>(color(8, 6, 12));
+    world.add(make_shared<sphere>(point3(0, 0.3, 0), 0.5, underlight));
+
+    // Glass spheres
+    auto glass = make_shared<dielectric>(1.5);
+    world.add(make_shared<sphere>(point3(-4, 0.8, -2), 0.8, glass));
+    world.add(make_shared<sphere>(point3(3.5, 0.6, -3), 0.6, glass));
+    world.add(make_shared<sphere>(point3(-2.5, 0.5, 3), 0.5, glass));
+
+    // Metal spheres
+    auto dark_metal = make_shared<metal>(color(0.5, 0.5, 0.6), 0.15);
+    world.add(make_shared<sphere>(point3(4, 0.7, 2), 0.7, dark_metal));
+    world.add(make_shared<sphere>(point3(-5, 0.6, 1), 0.6, dark_metal));
+
+    // image texture
+    auto texture = make_shared<image_texture>("earthmap.jpg");
+    auto textured_mat = make_shared<lambertian>(texture);
+    world.add(make_shared<sphere>(point3(2, 0.5, 4), 0.5, textured_mat));
+
+    // perlin noise
+    auto dark_perlin = make_shared<noise_texture>(2.0);
+    auto perlin_mat = make_shared<lambertian>(dark_perlin);
+    world.add(make_shared<sphere>(point3(-3, 0.6, -4), 0.6, perlin_mat));
+
+    // motion blur
+    auto ghost_mat1 = make_shared<lambertian>(color(0.8, 0.5, 0.9));
+    auto mb_center1_1 = point3(-6, 2, -3);
+    auto mb_center1_2 = mb_center1_1 + vec3(1.0, 0.3, 0);
+    world.add(make_shared<sphere>(mb_center1_1, mb_center1_2, 0.4, ghost_mat1));
+    auto ghost_mat2 = make_shared<lambertian>(color(0.5, 0.8, 0.9));
+    auto mb_center2_1 = point3(6, 2.5, 2);
+    auto mb_center2_2 = mb_center2_1 + vec3(0, 0, -1.2);
+    world.add(make_shared<sphere>(mb_center2_1, mb_center2_2, 0.35, ghost_mat2));
+
+    // triangle crystals
+    auto crystal_mat1 = make_shared<metal>(color(0.6, 0.5, 0.8), 0.05);
+    shared_ptr<hittable> tet1 = tetrahedron(point3(-3, 4, -2), point3(-2, 5.5, -1), crystal_mat1);
+    tet1 = make_shared<rotate_y>(tet1, 60);
+    world.add(tet1);
+    auto crystal_mat2 = make_shared<metal>(color(0.5, 0.6, 0.8), 0.05);
+    shared_ptr<hittable> tet2 = tetrahedron(point3(3, 4.5, 1), point3(2, 6, 2), crystal_mat2);
+    tet2 = make_shared<rotate_y>(tet2, -40);
+    world.add(tet2);
+
+    // quads
+    auto stone_mat = make_shared<lambertian>(color(0.3, 0.3, 0.35));
+    for (int i = -2; i <= 2; i += 2) {
+        for (int j = -2; j <= 2; j += 2) {
+            world.add(make_shared<quad>(point3(i * 1.5, 0.01, j * 1.5), vec3(1.2, 0, 0), vec3(0, 0, 1.2), stone_mat));
+        }
+    }
+
+    // volumes
+    auto dark_mist1 = make_shared<sphere>(point3(-4, 2, -1), 3.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(dark_mist1, 0.2, color(0.3, 0.3, 0.5)));
+    auto dark_mist2 = make_shared<sphere>(point3(4, 2.5, 0), 2.8, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(dark_mist2, 0.25, color(0.4, 0.3, 0.6)));
+    auto purple_wisp = make_shared<sphere>(point3(0, 3, -3), 2.0, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(purple_wisp, 0.35, color(0.5, 0.3, 0.7)));
+    auto night_atmosphere = make_shared<sphere>(point3(0, 0, 0), 100, make_shared<dielectric>(1.5));
+    world.add(make_shared<volume>(night_atmosphere, 0.0012, color(0.25, 0.25, 0.35)));
+
+    // main HDR lights
+    auto hdr_light1 = make_shared<diffuse_light>(color(15, 18, 25));
+    world.add(make_shared<sphere>(point3(-8, 6, -6), 1.0, hdr_light1));
+
+    auto hdr_light2 = make_shared<diffuse_light>(color(18, 15, 28));
+    world.add(make_shared<sphere>(point3(8, 7, 5), 0.9, hdr_light2));
+
+    auto hdr_light3 = make_shared<diffuse_light>(color(12, 15, 22));
+    world.add(make_shared<sphere>(point3(0, 8, -4), 0.8, hdr_light3));
+
+    // some lights
+    world.add(make_shared<sphere>(point3(-5, 3, 4), 0.3, make_shared<diffuse_light>(color(10, 12, 18))));
+    world.add(make_shared<sphere>(point3(6, 4, -2), 0.35, make_shared<diffuse_light>(color(14, 10, 22))));
+    world.add(make_shared<sphere>(point3(-3, 5, -5), 0.25, make_shared<diffuse_light>(color(8, 12, 16))));
+    world.add(make_shared<sphere>(point3(5, 3.5, 3), 0.28, make_shared<diffuse_light>(color(12, 10, 20))));
+    world.add(make_shared<sphere>(point3(-4, 4.5, -3), 0.22, make_shared<diffuse_light>(color(16, 14, 24))));
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    // cube map
+    CubeMap cubemap;
+    bool use_env = cubemap.load_cubemap("./EnvironmentMaps/satara.png");
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 60;
+    cam.background = color(0.1, 0.1, 0.15);
+    cam.exposure = 0.15;
+
+    cam.vfov = 45;
+    cam.lookfrom = point3(0, 3, 10);
+    cam.lookat = point3(0, 1.5, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.6;
+    cam.focus_dist = 10.0;
+
+    if (use_env) {
+        cam.use_cubemap = true;
+        cam.cubemap = &cubemap;
+    }
+
+    // Render
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
 /*
 * Function that is used to select the image I want to render
 */
 void summon_image(){
     //lessSpheresFast();
-    switch(27) {
+    switch(30) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -1871,6 +2212,9 @@ void summon_image(){
         case 25: cubemap_test(); break;
         case 26: final_showcase(); break;
         case 27: cool(); break;
+        case 28: cornell_box_HDR_enhanced(); break;
+        case 29: ultimate_showcase(); break;
+        case 30: dark_moody_night(); break;
     }
 }
 
