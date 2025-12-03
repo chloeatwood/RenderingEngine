@@ -1749,25 +1749,41 @@ void cool() { //Has lots of potential but needs some work
     world.add(tet2);
     
 
-    // mesh
-    auto mesh_material = make_shared<metal>(color(0.8, 0.8, 0.9), 0.05);
-    auto mesh = load_obj_mesh("meshes/bat.obj", mesh_material, point3(0, 1.5, 0), 1.5);
+    // BAT
+    auto mesh_material = make_shared<lambertian>(color(0.8, 0.7, 1.0));  // Bright lavender
+    auto mesh = load_obj_mesh("meshes/bat.obj", mesh_material, point3(0.0, 0.1, 0.5), 1.2);
     world.add(mesh);
     
-    // image texture
-    auto JPG = make_shared<image_texture>("purple.jpg");
-    auto purpleJPG = make_shared<lambertian>(JPG);
-    world.add(make_shared<sphere>(point3(-6, 1, -2), 0.8, purpleJPG));
     
-    // Perlin noise 
-    auto perlin_tex = make_shared<noise_texture>(4.0);
-    world.add(make_shared<sphere>(point3(6, 1, 2), 0.8, make_shared<lambertian>(perlin_tex)));
+    // image texture
+    auto purple_texture = make_shared<image_texture>("purple.jpg");
+    auto purple = make_shared<lambertian>(purple_texture);
+    world.add(make_shared<sphere>(point3(-4.5, 0.6, 2), 0.6, purple));
+    world.add(make_shared<sphere>(point3(4, 0.7, -3), 0.7, purple));
+    world.add(make_shared<sphere>(point3(-3, 0.5, -3), 0.5, purple));
+    
+    // perlin noise
+    auto perlin_tex = make_shared<noise_texture>(3.0);
+    auto perlin_mat = make_shared<lambertian>(perlin_tex);
+    world.add(make_shared<sphere>(point3(4.5, 0.6, 2), 0.6, perlin_mat));
+    world.add(make_shared<sphere>(point3(-2.5, 0.5, -4), 0.5, perlin_mat));
+    world.add(make_shared<sphere>(point3(2, 0.6, 4), 0.6, perlin_mat));
     
     // motion blur
-    auto moving_material = make_shared<lambertian>(color(0.9, 0.3, 0.5));
-    auto center1 = point3(0, 0.5, -5);
-    auto center2 = center1 + vec3(0, 0.5, 0);
-    world.add(make_shared<sphere>(center1, center2, 0.5, moving_material));
+    auto moving_material1 = make_shared<lambertian>(color(0.9, 0.3, 0.5));
+    auto mb_center1_1 = point3(-5, 0.7, -1);
+    auto mb_center1_2 = mb_center1_1 + vec3(1.2, 0, 0);
+    world.add(make_shared<sphere>(mb_center1_1, mb_center1_2, 0.7, moving_material1));
+    
+    auto moving_material2 = make_shared<lambertian>(color(0.3, 0.9, 0.7));
+    auto mb_center2_1 = point3(5, 0.6, 2.5);
+    auto mb_center2_2 = mb_center2_1 + vec3(0, 0, -1.5);
+    world.add(make_shared<sphere>(mb_center2_1, mb_center2_2, 0.6, moving_material2));
+    
+    auto moving_material3 = make_shared<lambertian>(color(0.8, 0.7, 0.2));
+    auto mb_center3_1 = point3(-2, 0.65, 4.5);
+    auto mb_center3_2 = mb_center3_1 + vec3(1.0, 0.5, 0);
+    world.add(make_shared<sphere>(mb_center3_1, mb_center3_2, 0.65, moving_material3));
     
 
     auto floor_metal = make_shared<metal>(color(0.5, 0.6, 0.8), 0.15);
@@ -1796,14 +1812,14 @@ void cool() { //Has lots of potential but needs some work
     
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1500;  
-    cam.samples_per_pixel = 100; //On PC at home try 10000 (10 thousand)
+    cam.samples_per_pixel = 10000; //On PC at home try 10000 (10 thousand)
     cam.max_depth = 60;
     cam.background = color(0.02, 0.02, 0.05);
     cam.exposure = 1.5;
     
-    cam.vfov = 40;
-    cam.lookfrom = point3(8, 4, 8);
-    cam.lookat = point3(0, 2.5, 0);
+    cam.vfov = 50;
+    cam.lookfrom = point3(8, 3, 8);
+    cam.lookat = point3(0, 1.5, 0);
     cam.vup = vec3(0, 1, 0);
     
     cam.defocus_angle = 0.3;
