@@ -44,7 +44,7 @@
 
     [X] Perlin noise: 10 -> Book 1 and Book 2
 
-    [ ] Cube maps: 15
+    [X] Cube maps: 15
 
     [ ] Importance sampling: 15 -> Book 3
 
@@ -57,28 +57,6 @@
     [ ] GPU acceleration (GPU computing w/ e.g., CUDA): 20
 
     [ ] Adaptive sampling: 15
-
-## Do this weekend
-    [X] Quads and Triangles (Quads in Ray Tracing The Next Week. If Struggle with Triangles look at some of the supplemental materials provided by Schaffer and the triangle code we did in class)
-
-## Due for Check-In after Quads and Triangles
-    [X] Lights (Chapter 7: Ray Tracing The Next Week)
-    [X] Instances (Chapter 8: Ray Tracing The Next Week)
-    [X] Volumes (Chapter 9: Ray Tracing The Next Week)
-
-## Before Thanksgiving Break have done
-    [X] Triangle Mesh loading
-    [X] Normal Interpolation
-    [X] Parallelization
-    [ ] HDR
-    [ ] Cube/Environment Maps
-
-## During Thanksgiving Break
-    [ ] Importance Sampling
-    [ ] Non-realisitc toon/cel shading
-
-## After Thanksgiving Break 
-    [ ] Paper
 
 
 

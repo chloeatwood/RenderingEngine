@@ -7,7 +7,7 @@ CPP_SOURCES = $(wildcard *.cpp)
 C_SOURCES = glad/glad.c
 
 # Output executable
-TARGET = inOneWeekend.exe
+TARGET = rayTracer.exe
 
 # Libraries
 LIBS = -lglfw3 -lopengl32 -lgdi32 -lz
