@@ -2098,16 +2098,6 @@ void dark_moody_night() {
     auto mb_center2_2 = mb_center2_1 + vec3(0, 0, -1.2);
     world.add(make_shared<sphere>(mb_center2_1, mb_center2_2, 0.35, ghost_mat2));
 
-    // triangle crystals
-    auto crystal_mat1 = make_shared<metal>(color(0.6, 0.5, 0.8), 0.05);
-    shared_ptr<hittable> tet1 = tetrahedron(point3(-3, 4, -2), point3(-2, 5.5, -1), crystal_mat1);
-    tet1 = make_shared<rotate_y>(tet1, 60);
-    world.add(tet1);
-    auto crystal_mat2 = make_shared<metal>(color(0.5, 0.6, 0.8), 0.05);
-    shared_ptr<hittable> tet2 = tetrahedron(point3(3, 4.5, 1), point3(2, 6, 2), crystal_mat2);
-    tet2 = make_shared<rotate_y>(tet2, -40);
-    world.add(tet2);
-
     // quads
     auto stone_mat = make_shared<lambertian>(color(0.3, 0.3, 0.35));
     for (int i = -2; i <= 2; i += 2) {
@@ -2118,11 +2108,11 @@ void dark_moody_night() {
 
     // volumes
     auto dark_mist1 = make_shared<sphere>(point3(-4, 2, -1), 3.0, make_shared<dielectric>(1.5));
-    world.add(make_shared<volume>(dark_mist1, 0.2, color(0.3, 0.3, 0.5)));
+    world.add(make_shared<volume>(dark_mist1, 0.07, color(0.3, 0.3, 0.5)));
     auto dark_mist2 = make_shared<sphere>(point3(4, 2.5, 0), 2.8, make_shared<dielectric>(1.5));
-    world.add(make_shared<volume>(dark_mist2, 0.25, color(0.4, 0.3, 0.6)));
+    world.add(make_shared<volume>(dark_mist2, 0.07, color(0.4, 0.3, 0.6)));
     auto purple_wisp = make_shared<sphere>(point3(0, 3, -3), 2.0, make_shared<dielectric>(1.5));
-    world.add(make_shared<volume>(purple_wisp, 0.35, color(0.5, 0.3, 0.7)));
+    world.add(make_shared<volume>(purple_wisp, 0.07, color(0.5, 0.3, 0.7)));
     auto night_atmosphere = make_shared<sphere>(point3(0, 0, 0), 100, make_shared<dielectric>(1.5));
     world.add(make_shared<volume>(night_atmosphere, 0.0012, color(0.25, 0.25, 0.35)));
 
@@ -2153,10 +2143,10 @@ void dark_moody_night() {
 
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
+    cam.samples_per_pixel = 10000;
     cam.max_depth = 60;
     cam.background = color(0.1, 0.1, 0.15);
-    cam.exposure = 0.15;
+    cam.exposure = 0.5;
 
     cam.vfov = 45;
     cam.lookfrom = point3(0, 3, 10);
