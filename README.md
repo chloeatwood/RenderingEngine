@@ -40,3 +40,4 @@
     - Parallelization
         - Uses OpenMP
     - Normal interpolation (smooth shading)
+    - Rendering updates inside OpenGL pop-up window
