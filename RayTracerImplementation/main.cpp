@@ -2169,12 +2169,379 @@ void dark_moody_night() {
     }
 }
 
+void HDRShowoff(){
+    hittable_list world;
+
+    auto ground = make_shared<dielectric>(1.5);
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground));
+
+    auto mirror1 = make_shared<metal>(color(0.95, 0.95, 0.95), 0.0);
+    world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, mirror1));
+
+    auto mirror2 = make_shared<metal>(color(0.95, 0.95, 0.95), 0.05);
+    world.add(make_shared<sphere>(point3(-2.5, 0.7, 1.5), 0.7, mirror2));
+
+    auto mirror3 = make_shared<metal>(color(0.95, 0.95, 0.95), 0.0);
+
+    shared_ptr<hittable> shard1 = tetrahedron(point3(0, 0, 0), point3(0.8, 1.2, 0.8), mirror3);
+    shard1 = make_shared<rotate_y>(shard1, 68);
+    shard1 = make_shared<translate>(shard1, vec3(1.8, 0, -3.5));
+    world.add(shard1);
+
+    auto glass = make_shared<dielectric>(1.5);
+    world.add(make_shared<sphere>(point3(2.5, 1, 1), 1.0, glass));
+    world.add(make_shared<sphere>(point3(-2, 0.6, -1.5), 0.6, glass));
+    world.add(make_shared<sphere>(point3(0, 0.4, 2.5), 0.4, glass));
+
+    auto gold_metal = make_shared<metal>(color(0.8, 0.6, 0.2), 0.1);
+    world.add(make_shared<sphere>(point3(3.5, 0.6, -0.5), 0.6, gold_metal));
+
+    auto copper_metal = make_shared<metal>(color(0.9, 0.4, 0.3), 0.15);
+    shared_ptr<hittable> box1 = box(point3(0, 0, 0), point3(1.0, 1.0, 1.0), copper_metal);
+    box1 = make_shared<rotate_y>(box1, 25);
+    box1 = make_shared<translate>(box1, vec3(-3.2, 0, -0.8));
+    world.add(box1);
+
+    auto silver_metal = make_shared<metal>(color(0.9, 0.9, 0.9), 0.05);
+    world.add(make_shared<sphere>(point3(1, 0.5, -2.5), 0.5, silver_metal));
+
+    auto purple_texture = make_shared<image_texture>("purple.jpg");
+    auto purple_mat = make_shared<lambertian>(purple_texture);
+    world.add(make_shared<sphere>(point3(2.25, 0.6, -1.8), 0.6, purple_mat));
+
+    auto mesh_material = make_shared<metal>(color(0.13, 0.37, 0.13), 0.1);
+    auto mesh_obj = load_obj_mesh("meshes/pottedPlant.obj", mesh_material, point3(-0.75, 0, -2.5), 2.5);
+    world.add(mesh_obj);
+
+    auto perlin_sphere_texture = make_shared<noise_texture>(3.0);
+    auto perlin_sphere_mat = make_shared<lambertian>(perlin_sphere_texture);
+    world.add(make_shared<sphere>(point3(-4, 0.7, 0.5), 0.7, perlin_sphere_mat));
+
+    // lights
+    auto bright_white = make_shared<diffuse_light>(color(15, 15, 15));
+    world.add(make_shared<sphere>(point3(-1.5, 3, -2), 0.01, bright_white));
+
+    auto intense_yellow = make_shared<diffuse_light>(color(20, 18, 5));
+    world.add(make_shared<sphere>(point3(3, 2.5, 2), 0.01, intense_yellow));
+
+    auto moderate_red = make_shared<diffuse_light>(color(8, 1, 1));
+    world.add(make_shared<sphere>(point3(-3, 2, 2), 0.01, moderate_red));
+
+    auto cool_blue = make_shared<diffuse_light>(color(2, 4, 12));
+    world.add(make_shared<sphere>(point3(2, 1.5, -2.5), 0.01, cool_blue));
+
+    auto warm_orange = make_shared<diffuse_light>(color(12, 6, 2));
+    world.add(make_shared<sphere>(point3(0, 4, 0), 0.01, warm_orange));
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    // Cube map 
+    CubeMap cubemap;
+    bool use_env = cubemap.load_cubemap("./EnvironmentMaps/the_sky_is_on_fire_4k.png");
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 1000;
+    cam.max_depth = 50;
+    cam.background = color(0.05, 0.05, 0.05);
+    cam.exposure = 0.6;
+
+    cam.vfov = 45;
+    cam.lookfrom = point3(0, 2.5, -8);
+    cam.lookat = point3(0, 1, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0.05;
+    cam.focus_dist = 8.0;
+
+    if (use_env) {
+        cam.use_cubemap = true;
+        cam.cubemap = &cubemap;
+    }
+
+    // Render
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
+
+void kaleidoscope() {
+    hittable_list world;
+
+    auto ground_metal = make_shared<metal>(color(0.8, 0.8, 0.8), 0.2);
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, ground_metal));
+
+    auto glass = make_shared<dielectric>(1.5);
+
+    for (int i = -6; i <= 6; i++) {
+        for (int j = -3; j <= 5; j++) {
+            double x = i * 1.2;
+            double y = j * 0.9 + 0.5;
+            double z = 0;
+            double radius = 0.5;
+            world.add(make_shared<sphere>(point3(x, y, z), radius, glass));
+        }
+    }
+
+    for (int i = -5; i <= 5; i++) {
+        for (int j = -2; j <= 4; j++) {
+            double x = i * 1.2 + 0.6;
+            double y = j * 0.9 + 0.95;
+            double z = 0.3;
+            double radius = 0.45;
+            world.add(make_shared<sphere>(point3(x, y, z), radius, glass));
+        }
+    }
+
+    auto red_mat = make_shared<lambertian>(color(0.9, 0.1, 0.1));
+    world.add(make_shared<quad>(point3(-8, -2, 5), vec3(5, 0, 0), vec3(0, 6, 0), red_mat));
+
+    auto blue_mat = make_shared<lambertian>(color(0.1, 0.3, 0.9));
+    world.add(make_shared<quad>(point3(-3, -2, 5), vec3(5, 0, 0), vec3(0, 6, 0), blue_mat));
+
+    auto green_mat = make_shared<lambertian>(color(0.1, 0.8, 0.2));
+    world.add(make_shared<quad>(point3(2, -2, 5), vec3(5, 0, 0), vec3(0, 6, 0), green_mat));
+
+    auto yellow_mat = make_shared<lambertian>(color(0.9, 0.9, 0.1));
+    world.add(make_shared<quad>(point3(-8, 4, 5), vec3(5, 0, 0), vec3(0, 4, 0), yellow_mat));
+
+    auto purple_mat = make_shared<lambertian>(color(0.7, 0.1, 0.8));
+    world.add(make_shared<quad>(point3(-3, 4, 5), vec3(5, 0, 0), vec3(0, 4, 0), purple_mat));
+
+    auto orange_mat = make_shared<lambertian>(color(0.9, 0.5, 0.1));
+    world.add(make_shared<quad>(point3(2, 4, 5), vec3(5, 0, 0), vec3(0, 4, 0), orange_mat));
+
+    auto cyan_mat = make_shared<lambertian>(color(0.1, 0.8, 0.9));
+    shared_ptr<hittable> box1 = box(point3(0, 0, 0), point3(1.5, 1.5, 1.5), cyan_mat);
+    box1 = make_shared<rotate_y>(box1, 25);
+    box1 = make_shared<translate>(box1, vec3(-4, 0.5, 3));
+    world.add(box1);
+
+    auto magenta_mat = make_shared<lambertian>(color(0.9, 0.1, 0.7));
+    shared_ptr<hittable> box2 = box(point3(0, 0, 0), point3(1.3, 1.8, 1.3), magenta_mat);
+    box2 = make_shared<rotate_y>(box2, -30);
+    box2 = make_shared<translate>(box2, vec3(3, 0.5, 3.5));
+    world.add(box2);
+
+    auto lime_mat = make_shared<lambertian>(color(0.5, 0.9, 0.1));
+    shared_ptr<hittable> box3 = box(point3(0, 0, 0), point3(1.4, 1.4, 1.4), lime_mat);
+    box3 = make_shared<rotate_y>(box3, 45);
+    box3 = make_shared<translate>(box3, vec3(0, 0.5, 4));
+    world.add(box3);
+
+    auto pink_mat = make_shared<lambertian>(color(0.9, 0.4, 0.6));
+    shared_ptr<hittable> box4 = box(point3(0, 0, 0), point3(1.2, 2.0, 1.2), pink_mat);
+    box4 = make_shared<rotate_y>(box4, 60);
+    box4 = make_shared<translate>(box4, vec3(-2, 0.5, 3.8));
+    world.add(box4);
+
+    auto teal_mat = make_shared<lambertian>(color(0.1, 0.7, 0.7));
+    world.add(make_shared<sphere>(point3(-5, 2, 6), 1.5, teal_mat));
+
+    auto coral_mat = make_shared<lambertian>(color(0.9, 0.5, 0.4));
+    world.add(make_shared<sphere>(point3(5, 2.5, 6.5), 1.8, coral_mat));
+
+    auto violet_mat = make_shared<lambertian>(color(0.5, 0.1, 0.9));
+    world.add(make_shared<sphere>(point3(0, 3, 7), 2.0, violet_mat));
+
+    auto red_light = make_shared<diffuse_light>(color(10, 1, 1));
+    world.add(make_shared<sphere>(point3(-6, 1, 4), 0.8, red_light));
+
+    auto blue_light = make_shared<diffuse_light>(color(1, 3, 12));
+    world.add(make_shared<sphere>(point3(6, 1.5, 4.5), 0.8, blue_light));
+
+    auto green_light = make_shared<diffuse_light>(color(1, 12, 2));
+    world.add(make_shared<sphere>(point3(2, 2.5, 5), 0.7, green_light));
+
+    auto yellow_light = make_shared<diffuse_light>(color(12, 12, 2));
+    world.add(make_shared<sphere>(point3(-3, 2, 5.5), 0.7, yellow_light));
+
+    auto white_light = make_shared<diffuse_light>(color(8, 8, 8));
+    world.add(make_shared<sphere>(point3(0, 10, 2), 2.0, white_light));
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 1000;
+    cam.max_depth = 50;
+    cam.background = color(0.05, 0.05, 0.05);
+    cam.exposure = 0.6;
+
+    cam.vfov = 60;
+    cam.lookfrom = point3(0, 2, -5);
+    cam.lookat = point3(0, 2, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.focus_dist = 5.0;
+
+    // Render
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
+void stained_glass() {
+    hittable_list world;
+
+    auto floor_mat = make_shared<lambertian>(color(0.2, 0.2, 0.25));
+    world.add(make_shared<sphere>(point3(0, -1000, 0), 1000, floor_mat));
+
+    auto glass = make_shared<dielectric>(1.5);
+
+    auto red_glass = make_shared<lambertian>(color(0.8, 0.1, 0.1));
+    for (int i = -5; i <= -3; i++) {
+        for (int j = 3; j <= 5; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, red_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto blue_glass = make_shared<lambertian>(color(0.1, 0.2, 0.9));
+    for (int i = -2; i <= 0; i++) {
+        for (int j = 3; j <= 5; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, blue_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto yellow_glass = make_shared<lambertian>(color(0.9, 0.85, 0.1));
+    for (int i = 1; i <= 3; i++) {
+        for (int j = 3; j <= 5; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, yellow_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto green_glass = make_shared<lambertian>(color(0.1, 0.7, 0.2));
+    for (int i = -5; i <= -3; i++) {
+        for (int j = 0; j <= 2; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, green_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto purple_glass = make_shared<lambertian>(color(0.6, 0.1, 0.8));
+    for (int i = -2; i <= 0; i++) {
+        for (int j = 0; j <= 2; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, purple_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto orange_glass = make_shared<lambertian>(color(0.9, 0.5, 0.1));
+    for (int i = 1; i <= 3; i++) {
+        for (int j = 0; j <= 2; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, orange_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto cyan_glass = make_shared<lambertian>(color(0.1, 0.8, 0.9));
+    for (int i = -5; i <= -3; i++) {
+        for (int j = -3; j <= -1; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, cyan_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto magenta_glass = make_shared<lambertian>(color(0.9, 0.1, 0.6));
+    for (int i = -2; i <= 0; i++) {
+        for (int j = -3; j <= -1; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, magenta_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto lime_glass = make_shared<lambertian>(color(0.6, 0.9, 0.2));
+    for (int i = 1; i <= 3; i++) {
+        for (int j = -3; j <= -1; j++) {
+            double x = i * 0.8;
+            double y = j * 0.8;
+            world.add(make_shared<sphere>(point3(x, y, 0.5), 0.35, lime_glass));
+            world.add(make_shared<sphere>(point3(x, y, 0), 0.4, glass));
+        }
+    }
+
+    auto lead_mat = make_shared<metal>(color(0.15, 0.15, 0.15), 0.3);
+    
+    for (int i = -4; i <= 2; i += 2) {
+        shared_ptr<hittable> lead = box(point3(0, 0, 0), point3(0.15, 7, 0.3), lead_mat);
+        lead = make_shared<translate>(lead, vec3(i * 0.8 + 0.4, -2.5, 0.2));
+        world.add(lead);
+    }
+
+    for (int j = -2; j <= 4; j += 2) {
+        shared_ptr<hittable> lead = box(point3(0, 0, 0), point3(8, 0.15, 0.3), lead_mat);
+        lead = make_shared<translate>(lead, vec3(-4.5, j * 0.8 + 0.4, 0.2));
+        world.add(lead);
+    }
+
+    auto sun_light = make_shared<diffuse_light>(color(15, 15, 12));
+    world.add(make_shared<sphere>(point3(0, 2, 8), 3.0, sun_light));
+
+    auto ambient_light = make_shared<diffuse_light>(color(2, 2, 2));
+    world.add(make_shared<sphere>(point3(0, 10, -5), 2.0, ambient_light));
+
+    world = hittable_list(make_shared<bvh_node>(world));
+
+    camera cam;
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 1000;
+    cam.max_depth = 50;
+    cam.background = color(0.02, 0.02, 0.03);
+    cam.exposure = 0.7;
+
+    cam.vfov = 50;
+    cam.lookfrom = point3(0, 1.5, -6);
+    cam.lookat = point3(0, 1.5, 0);
+    cam.vup = vec3(0, 1, 0);
+
+    cam.defocus_angle = 0;
+    cam.focus_dist = 6.0;
+
+    // Render
+    if (g_use_opengl && g_window) {
+        cam.render_opengl(world, g_window, g_tex);
+    } else {
+        cam.render(world);
+    }
+}
+
 /*
 * Function that is used to select the image I want to render
 */
 void summon_image(){
     //lessSpheresFast();
-    switch(30) {
+    switch(33) {
         case 1: lessSpheresFast(); break;
         case 2: checkered_spheres(); break;
         case 3: lostaSpheres(); break;
@@ -2205,6 +2572,9 @@ void summon_image(){
         case 28: cornell_box_HDR_enhanced(); break;
         case 29: ultimate_showcase(); break;
         case 30: dark_moody_night(); break;
+        case 31: HDRShowoff(); break;
+        case 32: kaleidoscope(); break;
+        case 33: stained_glass(); break;
     }
 }
 
